@@ -1,5 +1,4 @@
 import abc
-import functools
 
 import math
 
@@ -61,7 +60,8 @@ class DerivativeController(Controller):
         return 'D'
 
     def control(self, deviation, timestamp):
-        value = self.gain * (deviation - self.last_deviation) / (timestamp - self.last_timestamp)
+        value = self.gain * (deviation - self.last_deviation) / \
+            (timestamp - self.last_timestamp)
         self.last_value = value
         self.last_deviation = deviation
         self.last_timestamp = timestamp

@@ -12,7 +12,6 @@ def main():
                     ' server.'
     )
     parser.add_argument(
-        '-h',
         '--hostname',
         help='Racing server host name.',
         default='localhost'

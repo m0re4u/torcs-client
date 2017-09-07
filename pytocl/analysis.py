@@ -55,7 +55,8 @@ class DataLogWriter:
 class DataLogReader:
     """Deserialization of logged data as ``np.array``."""
 
-    def __init__(self, filepath, state_attributes=None, command_attributes=None):
+    def __init__(self, filepath, state_attributes=None,
+                 command_attributes=None):
         self.filepath = filepath
         self.state_attributes = state_attributes or []
         self.command_attributes = command_attributes or []

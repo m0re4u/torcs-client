@@ -40,7 +40,8 @@ class Client:
         _logger.debug('Initializing {}.'.format(self))
 
     def __repr__(self):
-        return '{s.__class__.__name__}({s.hostaddr!r}) -- {s.state.name}'.format(s=self)
+        return '{s.__class__.__name__}({s.hostaddr!r}) -- {s.state.name}' \
+            ''.format(s=self)
 
     def run(self):
         """Enters cyclic execution of the client network interface."""
@@ -51,7 +52,8 @@ class Client:
             self.state = State.STARTING
 
             try:
-                _logger.info('Registering driver client with server {}.'.format(self.hostaddr))
+                _logger.info('Registering driver client with server {}.'
+                             .format(self.hostaddr))
                 self._configure_udp_socket()
                 self._register_driver()
                 self.state = State.RUNNING
@@ -79,14 +81,22 @@ class Client:
         self.socket.settimeout(TO_SOCKET_SEC)
 
     def _register_driver(self):
-        """Sends driver's initialization data to server and waits for acceptance response."""
+        """
+        Sends driver's initialization data to server and waits for acceptance
+        response.
+        """
 
         angles = self.driver.range_finder_angles
         assert len(angles) == 19, \
-            'Inconsistent length {} of range of finder iterable.'.format(len(angles))
+            'Inconsistent length {} of range of finder iterable.'.format(
+                len(angles)
+            )
 
         data = {'init': angles}
-        buffer = self.serializer.encode(data, prefix='SCR-{}'.format(self.hostaddr[1]))
+        buffer = self.serializer.encode(
+            data,
+            prefix='SCR-{}'.format(self.hostaddr[1])
+        )
 
         _logger.info('Registering client.')
 
@@ -162,7 +172,8 @@ class Serializer:
         """Encodes data in given dictionary.
 
         Args:
-            data (dict): Dictionary of payload to encode. Values are arrays of numbers.
+            data (dict): Dictionary of payload to encode. Values are arrays of
+                numbers.
             prefix (str|None): Optional prefix string.
 
         Returns:
@@ -184,10 +195,13 @@ class Serializer:
         return ''.join(elements).encode()
 
     @staticmethod
-    def decode(buffer):
-        """Decodes network representation of sensor data received from racing server."""
+    def decode(buff):
+        """
+        Decodes network representation of sensor data received from racing
+        server.
+        """
         d = {}
-        s = buffer.decode()
+        s = buff.decode()
 
         pos = 0
         while len(s) > pos:
@@ -199,12 +213,16 @@ class Serializer:
             end = s.find(')', start + 1)
             if end < 0:
                 _logger.warning('Opening brace at position {} not matched in '
-                                'buffer {!r}.'.format(start, buffer))
+                                'buffer {!r}.'.format(start, buff))
                 break
 
             items = s[start + 1:end].split(' ')
             if len(items) < 2:
-                _logger.warning('Buffer {!r} not holding proper key value pair.'.format(buffer))
+                _logger.warning(
+                    'Buffer {!r} not holding proper key value pair.'.format(
+                        buff
+                    )
+                )
             else:
                 key = items[0]
                 if len(items) == 2:
