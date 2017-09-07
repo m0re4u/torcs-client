@@ -12,11 +12,13 @@ def main():
                     ' server.'
     )
     parser.add_argument(
+        '-h',
         '--hostname',
         help='Racing server host name.',
         default='localhost'
     )
     parser.add_argument(
+        '-p',
         '--port',
         help='Port to connect, 3001 - 3010 for clients 1 - 10.',
         type=int,
