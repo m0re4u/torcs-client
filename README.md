@@ -1,6 +1,6 @@
 # Python client for TORCS with network plugin for the 2012 SCRC
 
-This is a reimplementation of the original SCRC client pySrcrcClient from lanquarden. It is used for teaching Python.
+This is a reimplementation by @moltob of the original SCRC client pySrcrcClient from @lanquarden. It is used to teach ideas of computational intelligence.
 
 ## `Client`
 
