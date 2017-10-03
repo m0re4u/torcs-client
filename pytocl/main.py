@@ -3,6 +3,7 @@ import argparse
 import logging
 
 from pytocl.protocol import Client
+from pytocl.driver import Driver
 
 
 def main():
@@ -38,7 +39,7 @@ def main():
     )
 
     # start client loop:
-    client = Client(**args.__dict__)
+    client = Client(driver=Driver(), **args.__dict__)
     client.run()
 
 
