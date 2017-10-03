@@ -3,10 +3,9 @@ import argparse
 import logging
 
 from pytocl.protocol import Client
-from pytocl.driver import Driver
 
 
-def main():
+def main(driver):
     """Main entry point of application."""
     parser = argparse.ArgumentParser(
         description='Client for TORCS racing car simulation with SCRC network'
@@ -39,9 +38,11 @@ def main():
     )
 
     # start client loop:
-    client = Client(driver=Driver(), **args.__dict__)
+    client = Client(driver=driver, **args.__dict__)
     client.run()
 
 
 if __name__ == '__main__':
-    main()
+    from pytocl.driver import Driver
+
+    main(Driver())
