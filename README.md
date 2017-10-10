@@ -9,6 +9,7 @@ This is a copy of the reimplementation in Python 3 by @moltob of the original SC
 * decodes class `State` from message from server, `state = self.decode(msg)`
 * encodes class `Command` for message to server, `msg = self.encode(command)`
 * internal state connection properties only and driver instance
+* use `Client(driver=your_driver, <other options>)` to use your own driver
 
 
 ## `Driver`
