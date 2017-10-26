@@ -11,7 +11,6 @@ This is a copy of the reimplementation in Python 3 by @moltob of the original SC
 * internal state connection properties only and driver instance
 * use `Client(driver=your_driver, <other options>)` to use your own driver
 
-
 ## `Driver`
 
 * encapsulates driving logic only
