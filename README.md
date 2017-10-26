@@ -1,6 +1,6 @@
 # Python client for TORCS with network plugin for the 2012 SCRC
 
-This is a copy of the reimplementation in Python 3 by @moltob of the original SCRC TORCS client pySrcrcClient from @lanquarden. It is used to teach ideas of computational intelligence.
+This is a copy of the reimplementation in Python 3 by @moltob of the original SCRC TORCS client pySrcrcClient from @lanquarden. It is used to teach ideas of computational intelligence. The file `my_driver.py` contains a shell to start writing your own driver.
 
 ## `Client`
 
