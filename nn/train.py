@@ -37,7 +37,6 @@ def read_file(filename):
     targets = df[df.columns[0:3]]
     targets.drop(targets.tail(1).index, inplace=True)
     target_matrix = targets.as_matrix()
-    # skip column 3 in data: speed
     data = df[df.columns[4:]]
     data.drop(data.tail(1).index, inplace=True)
     data_matrix = data.as_matrix()
@@ -53,7 +52,10 @@ def main(train_file, test_file, cuda_enabled):
     epochs = 3000
     D_in, D_out = data.shape[1], targets.shape[1]
     EXAMPLES = data.shape[0]
-    dtype = torch.FloatTensor
+    if cuda_enabled:
+        dtype = torch.cuda.FloatTensor
+    else:
+        dtype = torch.FloatTensor
 
     print("Data have size: {}".format(data.shape))
     print("Targets have size: {}".format(targets.shape))
@@ -67,14 +69,8 @@ def main(train_file, test_file, cuda_enabled):
     optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=0.9)
 
     for epoch in range(epochs):
-        # for i in range(EXAMPLES):
-        #     x_batch = Variable(torch.Tensor(data[i]), requires_grad=True)
-        #     y_batch = Variable(torch.Tensor(targets[i]), requires_grad=False)
-        x_batch = Variable(torch.Tensor(data), requires_grad=True)
-        y_batch = Variable(torch.Tensor(targets), requires_grad=False)
-        if cuda_enabled:
-            x_batch = x_batch.cuda()
-            y_batch = y_batch.cuda()
+        x_batch = Variable(torch.Tensor(data).type(dtype), requires_grad=True)
+        y_batch = Variable(torch.Tensor(targets).type(dtype), requires_grad=False)
 
         y_pred = model(x_batch)
 

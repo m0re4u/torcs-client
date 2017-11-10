@@ -12,7 +12,7 @@ DEGREE_PER_RADIANS = 180 / math.pi
 class ANNDriver(Driver):
     def drive(self, carstate: State) -> Command:
         model = TwoLayerNet(21, 100, 3)
-        model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt"))
+        model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt", map_location=lambda storage, loc: storage))
         sensors = [carstate.distance_from_center, carstate.angle / DEGREE_PER_RADIANS, *carstate.distances_from_edge]
         y = model(Variable(torch.Tensor(sensors)))
         command = Command()
