@@ -33,33 +33,35 @@ class TwoLayerNet(torch.nn.Module):
 
 
 def read_file(filename):
-    df = pd.read_csv(filename, skiprows=1)
-    targets = df[df.columns[0:3]]
-    targets.drop(targets.tail(1).index, inplace=True)
-    target_matrix = targets.as_matrix()
-    data = df[df.columns[4:]]
-    data.drop(data.tail(1).index, inplace=True)
-    data_matrix = data.as_matrix()
-    return target_matrix, data_matrix
+    """
+    Read a data file from TORCS and use it as labeled data
+    """
+    df = pd.read_csv(filename)
+    # Drop speed column
+    df1 = df.drop(['SPEED'], axis=1)
+    # Drop last row
+    df1.drop(df1.tail(1).index, inplace=True)
+
+    # First three columns are targets, following 21 are input
+    return df1.as_matrix()
 
 
 def main(train_file, cuda_enabled, params):
-    targets, data = read_file(train_file)
+    data = read_file(train_file)
 
     H = params["hidden"]  # number of hidden neurons
     alpha = params["lr"]  # learning rate
     epochs = params["epochs"]
 
-    D_in, D_out = data.shape[1], targets.shape[1]
-    EXAMPLES = data.shape[0]
+    D_in = 21  # number of inputs
+    D_out = 3  # number of outputs
 
     if cuda_enabled:
         dtype = torch.cuda.FloatTensor
     else:
         dtype = torch.FloatTensor
 
-    print("Data have size: {}".format(data.shape))
-    print("Targets have size: {}".format(targets.shape))
+    print("Data has size: {}".format(data.shape))
 
     model = TwoLayerNet(D_in, H, D_out)
     if cuda_enabled:
@@ -70,9 +72,9 @@ def main(train_file, cuda_enabled, params):
     optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=0.9)
 
     for epoch in range(epochs):
-        x_batch = Variable(torch.Tensor(data).type(dtype), requires_grad=True)
-        y_batch = Variable(torch.Tensor(targets).type(dtype), requires_grad=False)
-
+        np.random.shuffle(data)
+        x_batch = Variable(torch.Tensor(data[:, 3:]).type(dtype), requires_grad=True)
+        y_batch = Variable(torch.Tensor(data[:, :3]).type(dtype), requires_grad=False)
         y_pred = model(x_batch)
 
         # Compute and print loss
