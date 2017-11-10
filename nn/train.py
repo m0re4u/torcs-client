@@ -43,15 +43,16 @@ def read_file(filename):
     return target_matrix, data_matrix
 
 
-def main(train_file, test_file, cuda_enabled):
+def main(train_file, cuda_enabled, params):
     targets, data = read_file(train_file)
-    # test_target, test_data = read_file(test_file)
 
-    H = 100  # number of hidden neurons
-    alpha = 1e-07  # learning rate
-    epochs = 3000
+    H = params["hidden"]  # number of hidden neurons
+    alpha = params["lr"]  # learning rate
+    epochs = params["epochs"]
+
     D_in, D_out = data.shape[1], targets.shape[1]
     EXAMPLES = data.shape[0]
+
     if cuda_enabled:
         dtype = torch.cuda.FloatTensor
     else:
@@ -81,7 +82,7 @@ def main(train_file, test_file, cuda_enabled):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print("Epoch: {:5d} - Loss: {}".format(epoch, loss.data[0]))
+        print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
 
     torch.save(model.state_dict(), "NNdriver.pt")
 
@@ -96,15 +97,30 @@ if __name__ == '__main__':
         default="../../train_data/aalborg.csv"
     )
     parser.add_argument(
-        "-t", "--test_file", help="",
-        default="../../train_data/alpine-1.csv"
+        "-lr", "--learning_rate", help="Set the learning rate",
+        default="0.001", type=float
+    )
+    parser.add_argument(
+        "-H", "--hidden", help="Set the number of hidden neurons",
+        default="1000", type=int
+    )
+    parser.add_argument(
+        "-e", "--epochs", help="Set the number of epochs to run",
+        default="10000", type=int
     )
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
     args = parser.parse_args()
     cuda_enabled = args.cuda and torch.cuda.is_available()
+
     if cuda_enabled:
         print("CUDA is enabled")
     else:
         print("CUDA is not enabled")
-    main(args.train_file, args.test_file, cuda_enabled)
+
+    param_dict = {
+        "lr": args.learning_rate,
+        "epochs": args.epochs,
+        "hidden": args.hidden,
+    }
+    main(args.train_file, cuda_enabled, param_dict)
