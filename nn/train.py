@@ -53,8 +53,10 @@ def main(train_file, cuda_enabled, params):
     alpha = params["lr"]  # learning rate
     epochs = params["epochs"]
 
+    N = 32     # batch size
     D_in = 21  # number of inputs
     D_out = 3  # number of outputs
+    EXAMPLES = int(np.floor(data.shape[0] / N))
 
     if cuda_enabled:
         dtype = torch.cuda.FloatTensor
@@ -73,17 +75,18 @@ def main(train_file, cuda_enabled, params):
 
     for epoch in range(epochs):
         np.random.shuffle(data)
-        x_batch = Variable(torch.Tensor(data[:, 3:]).type(dtype), requires_grad=True)
-        y_batch = Variable(torch.Tensor(data[:, :3]).type(dtype), requires_grad=False)
-        y_pred = model(x_batch)
+        for i in range(EXAMPLES):
+            x_batch = Variable(torch.Tensor(data[i:i + N, 3:]).type(dtype), requires_grad=True)
+            y_batch = Variable(torch.Tensor(data[i:i + N, :3]).type(dtype), requires_grad=False)
+            y_pred = model(x_batch)
 
-        # Compute and print loss
-        loss = criterion(y_pred, y_batch)
+            # Compute and print loss
+            loss = criterion(y_pred, y_batch)
 
-        # Zero gradients, perform a backward pass, and update the weights.
-        optimizer.zero_grad()
-        loss.backward()
-        optimizer.step()
+            # Zero gradients, perform a backward pass, and update the weights.
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
         print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
 
     torch.save(model.state_dict(), "NNdriver.pt")
