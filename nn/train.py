@@ -8,8 +8,6 @@ import numpy as np
 import argparse
 import pandas as pd
 
-import dataset as ds
-
 
 class TwoLayerNet(torch.nn.Module):
     def __init__(self, D_in, H, D_out):
@@ -79,6 +77,7 @@ def main(train_file, cuda_enabled, params):
 
 
 if __name__ == '__main__':
+    import dataset as ds
     pd.options.mode.chained_assignment = None  # default='warn'
 
     parser = argparse.ArgumentParser(
@@ -120,3 +119,5 @@ if __name__ == '__main__':
         "mom": args.momentum
     }
     main(args.train_file, cuda_enabled, param_dict)
+else:
+    from . import dataset as ds
