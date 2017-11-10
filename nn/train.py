@@ -69,7 +69,7 @@ def main(train_file, cuda_enabled, params):
 
     print(model)
     criterion = torch.nn.MSELoss(size_average=False)
-    optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=0.9)
+    optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=params["mom"])
 
     for epoch in range(epochs):
         np.random.shuffle(data)
@@ -100,15 +100,19 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",
-        default="0.001", type=float
+        default="0.000001", type=float
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",
-        default="1000", type=int
+        default="500", type=int
     )
     parser.add_argument(
         "-e", "--epochs", help="Set the number of epochs to run",
         default="10000", type=int
+    )
+    parser.add_argument(
+        "-m", "--momentum", help="Set the momentum of the SGD",
+        default="0.9", type=float
     )
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
@@ -124,5 +128,6 @@ if __name__ == '__main__':
         "lr": args.learning_rate,
         "epochs": args.epochs,
         "hidden": args.hidden,
+        "mom": args.momentum
     }
     main(args.train_file, cuda_enabled, param_dict)
