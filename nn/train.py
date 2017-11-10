@@ -1,12 +1,14 @@
 import torch
 from torch.autograd import Variable
+from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
 
 import numpy as np
 import argparse
 import pandas as pd
-import shutil
+
+import dataset as ds
 
 
 class TwoLayerNet(torch.nn.Module):
@@ -47,7 +49,8 @@ def read_file(filename):
 
 
 def main(train_file, cuda_enabled, params):
-    data = read_file(train_file)
+    data = ds.DriverDataset(train_file)
+    train_loader = DataLoader(data, batch_size=10, shuffle=False, num_workers=1)
 
     H = params["hidden"]  # number of hidden neurons
     alpha = params["lr"]  # learning rate
@@ -56,14 +59,8 @@ def main(train_file, cuda_enabled, params):
     N = 32     # batch size
     D_in = 21  # number of inputs
     D_out = 3  # number of outputs
-    EXAMPLES = int(np.floor(data.shape[0] / N))
 
-    if cuda_enabled:
-        dtype = torch.cuda.FloatTensor
-    else:
-        dtype = torch.FloatTensor
-
-    print("Data has size: {}".format(data.shape))
+    print("Data has size: {}".format(len(data)))
 
     model = TwoLayerNet(D_in, H, D_out)
     if cuda_enabled:
@@ -74,10 +71,13 @@ def main(train_file, cuda_enabled, params):
     optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=params["mom"])
 
     for epoch in range(epochs):
-        np.random.shuffle(data)
-        for i in range(EXAMPLES):
-            x_batch = Variable(torch.Tensor(data[i:i + N, 3:]).type(dtype), requires_grad=True)
-            y_batch = Variable(torch.Tensor(data[i:i + N, :3]).type(dtype), requires_grad=False)
+        for batch_i, (batch_target, batch_data) in enumerate(train_loader):
+            if cuda_enabled:
+                batch_data, batch_target = batch_data.cuda(), batch_target.cuda()
+            x_batch = Variable(batch_data)
+            y_batch = Variable(batch_target)
+
+            # Forward pass
             y_pred = model(x_batch)
 
             # Compute and print loss
