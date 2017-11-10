@@ -10,19 +10,35 @@ DEGREE_PER_RADIANS = 180 / math.pi
 
 
 class ANNDriver(Driver):
+    def __init__(self):
+        self.model = TwoLayerNet(21, 500, 3)
+        self.model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt", map_location=lambda storage, loc: storage))
+
     def drive(self, carstate: State) -> Command:
-        model = TwoLayerNet(21, 100, 3)
-        model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt", map_location=lambda storage, loc: storage))
-        sensors = [carstate.distance_from_center, carstate.angle / DEGREE_PER_RADIANS, *carstate.distances_from_edge]
-        y = model(Variable(torch.Tensor(sensors)))
+        sensors = [carstate.distance_from_center, carstate.angle / DEGREE_PER_RADIANS, *(carstate.distances_from_edge)]
+        # Forward pass our model
+        y = self.model(Variable(torch.Tensor(sensors)))
+
+        # Create command from model output
         command = Command()
+        # if y.data[0] > y.data[1]:
+        #     command.accelerator = 1
+        #     command.brake = 0
+        # else:
+        #     command.accelerator = 0
+        #     command.brake = 1
         command.accelerator = y.data[0]
         command.brake = y.data[1]
-        command.steering = -y.data[2]
+
+        command.steering = y.data[2]
+
+        # Naive switching of gear
         self.switch_gear(carstate, command)
+
         print("---------------------------")
-        print("Angle: {}".format(carstate.angle / DEGREE_PER_RADIANS))
+        print(command)
         print(carstate.distances_from_edge)
+
         return command
 
     def switch_gear(self, carstate, command):

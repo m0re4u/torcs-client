@@ -34,20 +34,6 @@ class TwoLayerNet(torch.nn.Module):
         return y_pred
 
 
-def read_file(filename):
-    """
-    Read a data file from TORCS and use it as labeled data
-    """
-    df = pd.read_csv(filename)
-    # Drop speed column
-    df1 = df.drop(['SPEED'], axis=1)
-    # Drop last row
-    df1.drop(df1.tail(1).index, inplace=True)
-
-    # First three columns are targets, following 21 are input
-    return df1.as_matrix()
-
-
 def main(train_file, cuda_enabled, params):
     data = ds.DriverDataset(train_file)
     train_loader = DataLoader(data, batch_size=10, shuffle=False, num_workers=1)
@@ -57,7 +43,7 @@ def main(train_file, cuda_enabled, params):
     epochs = params["epochs"]
 
     N = 32     # batch size
-    D_in = 21  # number of inputs
+    D_in = 22  # number of inputs
     D_out = 3  # number of outputs
 
     print("Data has size: {}".format(len(data)))
