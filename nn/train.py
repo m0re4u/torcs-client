@@ -44,14 +44,13 @@ def read_file(filename):
     return target_matrix, data_matrix
 
 
-def main(train_file, test_file):
+def main(train_file, test_file, cuda_enabled):
     targets, data = read_file(train_file)
     # test_target, test_data = read_file(test_file)
 
-    N = 32  # Batch size
     H = 100  # number of hidden neurons
-    alpha = 3e-03  # learning rate
-    epochs = 10000
+    alpha = 1e-07  # learning rate
+    epochs = 3000
     D_in, D_out = data.shape[1], targets.shape[1]
     EXAMPLES = data.shape[0]
     dtype = torch.FloatTensor
@@ -60,9 +59,12 @@ def main(train_file, test_file):
     print("Targets have size: {}".format(targets.shape))
 
     model = TwoLayerNet(D_in, H, D_out)
+    if cuda_enabled:
+        model.cuda()
+
     print(model)
     criterion = torch.nn.MSELoss(size_average=False)
-    optimizer = torch.optim.Adam(model.parameters(), lr=alpha)
+    optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=0.9)
 
     for epoch in range(epochs):
         # for i in range(EXAMPLES):
@@ -70,6 +72,9 @@ def main(train_file, test_file):
         #     y_batch = Variable(torch.Tensor(targets[i]), requires_grad=False)
         x_batch = Variable(torch.Tensor(data), requires_grad=True)
         y_batch = Variable(torch.Tensor(targets), requires_grad=False)
+        if cuda_enabled:
+            x_batch = x_batch.cuda()
+            y_batch = y_batch.cuda()
 
         y_pred = model(x_batch)
 
@@ -80,7 +85,7 @@ def main(train_file, test_file):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-        print(epoch, loss.data[0])
+        print("Epoch: {:5d} - Loss: {}".format(epoch, loss.data[0]))
 
     torch.save(model.state_dict(), "NNdriver.pt")
 
@@ -98,5 +103,12 @@ if __name__ == '__main__':
         "-t", "--test_file", help="",
         default="../../train_data/alpine-1.csv"
     )
+    parser.add_argument('--cuda', action='store_true', default=False,
+                        help='enables CUDA training')
     args = parser.parse_args()
-    main(args.train_file, args.test_file)
+    cuda_enabled = args.cuda and torch.cuda.is_available()
+    if cuda_enabled:
+        print("CUDA is enabled")
+    else:
+        print("CUDA is not enabled")
+    main(args.train_file, args.test_file, cuda_enabled)
