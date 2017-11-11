@@ -34,13 +34,12 @@ class TwoLayerNet(torch.nn.Module):
 
 def main(train_file, cuda_enabled, params):
     data = ds.DriverDataset(train_file)
-    train_loader = DataLoader(data, batch_size=10, shuffle=False, num_workers=1)
+    train_loader = DataLoader(data, batch_size=params["batch"], shuffle=True, num_workers=1)
 
     H = params["hidden"]  # number of hidden neurons
     alpha = params["lr"]  # learning rate
     epochs = params["epochs"]
 
-    N = 32     # batch size
     D_in = 22  # number of inputs
     D_out = 3  # number of outputs
 
@@ -99,6 +98,10 @@ if __name__ == '__main__':
         default="10000", type=int
     )
     parser.add_argument(
+        "-b", "--batch", help="Set the batch size",
+        default="10", type=int
+    )
+    parser.add_argument(
         "-m", "--momentum", help="Set the momentum of the SGD",
         default="0.9", type=float
     )
@@ -116,7 +119,8 @@ if __name__ == '__main__':
         "lr": args.learning_rate,
         "epochs": args.epochs,
         "hidden": args.hidden,
-        "mom": args.momentum
+        "mom": args.momentum,
+        "batch": args.batch
     }
     main(args.train_file, cuda_enabled, param_dict)
 else:
