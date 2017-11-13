@@ -125,6 +125,7 @@ def run_ff_net():
     #     input_vectors[i] = input_vectors[i][:-1]
 
     input_size = len(input_vectors[0])
+    # Following paper used for hidden_size calculation: http://www.sciencedirect.com/science/article/pii/S2212671612002181
     hidden_size = 15
     target_size = len(target_vectors[0])
     learning_rate = 1e-04
