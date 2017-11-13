@@ -6,12 +6,9 @@ from nn import train
 from torch.autograd import Variable
 
 
-DEGREE_PER_RADIANS = 180 / math.pi
-
-
 class ANNDriver(Driver):
     def __init__(self):
-        self.model = train.TwoLayerNet(22, 500, 3)
+        self.model = train.TwoLayerNet(22, 1000, 3)
         self.model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt", map_location=lambda storage, loc: storage))
 
     def drive(self, carstate: State) -> Command:
@@ -32,6 +29,7 @@ class ANNDriver(Driver):
         print(command)
         print(carstate.distances_from_edge)
         print("Speed: {}".format(carstate.speed_x))
+        print("Angle: {}".format(carstate.angle))
 
         return command
 

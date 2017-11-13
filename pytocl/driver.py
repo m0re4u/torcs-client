@@ -3,7 +3,7 @@ import logging
 import math
 
 from pytocl.analysis import DataLogWriter
-from pytocl.car import State, Command, MPS_PER_KMH
+from pytocl.car import State, Command
 from pytocl.controller import CompositeController, ProportionalController, \
     IntegrationController, DerivativeController
 
@@ -78,7 +78,7 @@ class Driver:
     def accelerate(self, carstate, target_speed, command):
         # compensate engine deceleration, but invisible to controller to
         # prevent braking:
-        speed_error = 1.0025 * target_speed * MPS_PER_KMH - carstate.speed_x
+        speed_error = 1.0025 * target_speed * 1000 / 3600 - carstate.speed_x
         acceleration = self.acceleration_ctrl.control(
             speed_error,
             carstate.current_lap_time

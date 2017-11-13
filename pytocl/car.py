@@ -6,7 +6,6 @@ from functools import partialmethod
 _logger = logging.getLogger(__name__)
 
 DEGREE_PER_RADIANS = 180 / math.pi
-MPS_PER_KMH = 1000 / 3600
 
 
 class Value:
@@ -67,8 +66,7 @@ class State(Value):
 
     def __init__(self, sensor_dict):
         """Creates decoded car state from sensor value dictionary."""
-        self.angle = self.float_value(sensor_dict, 'angle') * \
-            DEGREE_PER_RADIANS
+        self.angle = self.float_value(sensor_dict, 'angle')
         self.current_lap_time = self.float_value(sensor_dict, 'curLapTime')
         self.damage = self.int_value(sensor_dict, 'damage')
         self.distance_from_start = self.float_value(
@@ -82,9 +80,9 @@ class State(Value):
         self.opponents = self.floats_value(sensor_dict, 'opponents')
         self.race_position = self.int_value(sensor_dict, 'racePos')
         self.rpm = self.float_value(sensor_dict, 'rpm')
-        self.speed_x = self.float_value(sensor_dict, 'speedX') * MPS_PER_KMH
-        self.speed_y = self.float_value(sensor_dict, 'speedY') * MPS_PER_KMH
-        self.speed_z = self.float_value(sensor_dict, 'speedZ') * MPS_PER_KMH
+        self.speed_x = self.float_value(sensor_dict, 'speedX')
+        self.speed_y = self.float_value(sensor_dict, 'speedY')
+        self.speed_z = self.float_value(sensor_dict, 'speedZ')
         self.distances_from_edge = self.floats_value(sensor_dict, 'track')
         self.distance_from_center = self.float_value(sensor_dict, 'trackPos')
         self.wheel_velocities = tuple(
