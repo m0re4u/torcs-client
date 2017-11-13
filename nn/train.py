@@ -34,7 +34,7 @@ class TwoLayerNet(torch.nn.Module):
 
 def main(train_file, cuda_enabled, params):
     data = ds.DriverDataset(train_file)
-    train_loader = DataLoader(data, batch_size=params["batch"], shuffle=True, num_workers=1)
+    train_loader = DataLoader(data, batch_size=params["batch"], shuffle=False, num_workers=1)
 
     H = params["hidden"]  # number of hidden neurons
     alpha = params["lr"]  # learning rate
@@ -62,6 +62,9 @@ def main(train_file, cuda_enabled, params):
 
             # Forward pass
             y_pred = model(x_batch)
+            # print("---")
+            # print("Prediction: ", y_pred)
+            # print("True: ", y_batch)
 
             # Compute and print loss
             loss = criterion(y_pred, y_batch)

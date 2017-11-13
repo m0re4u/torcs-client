@@ -8,7 +8,7 @@ from torch.autograd import Variable
 
 class ANNDriver(Driver):
     def __init__(self):
-        self.model = train.TwoLayerNet(22, 1000, 3)
+        self.model = train.TwoLayerNet(22, 500, 3)
         self.model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt", map_location=lambda storage, loc: storage))
 
     def drive(self, carstate: State) -> Command:
