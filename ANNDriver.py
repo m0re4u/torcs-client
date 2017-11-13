@@ -18,9 +18,14 @@ class ANNDriver(Driver):
         sensors = [carstate.speed_x, carstate.distance_from_center, carstate.angle, *carstate.distances_from_edge]
         y = self.model(Variable(torch.Tensor(sensors)))
         command = Command()
-        command.accelerator = y.data[0]
-        command.brake = y.data[1]
-        command.steering = -y.data[2]
+        # TODO: Fix with self-organising map
+        if y.data[0] > 0.8:
+            command.accelerator = 1.0
+            command.brake = 0.0
+        else:
+            command.accelerator = y.data[0]
+            command.brake = y.data[1]
+        command.steering = y.data[2]
         self.switch_gear(carstate, command)
         print("---------------------------")
         print("SENSOR:", sensors)

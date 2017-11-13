@@ -18,7 +18,7 @@ class Model(nn.Module):
         x = self.h2(x)
         x = F.tanh(x)
         x = self.h3(x)
-        x = F.softmax(x)
+        x = F.tanh(x)
         return x
 
 
@@ -130,7 +130,7 @@ def run_ff_net():
     input_size = len(input_vectors[0])
     hidden_size = 1000
     target_size = len(target_vectors[0])
-    learning_rate = 1e-04
+    learning_rate = 1e-05
 
     model = Model(input_size, hidden_size, target_size)
     opt = optim.Adam(params=model.parameters(), lr=learning_rate)
@@ -145,7 +145,7 @@ def run_ff_net():
         loss.backward()
         opt.step()
 
-        print('loss', loss.data[0])
+        print('epoch: %i, loss: %f', (epoch, loss.data[0]))
 
     print('out', out)
     print('target', target.view(1, -1))
@@ -183,6 +183,6 @@ def run_reservoir():
     print('loss', loss.data[0])
     torch.save(model.state_dict(), "NNdriver.pt")
 
-
-# run_ff_net()
-run_reservoir()
+if __name__ == '__main__':
+    run_ff_net()
+    # run_reservoir()
