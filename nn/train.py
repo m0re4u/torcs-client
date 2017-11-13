@@ -27,9 +27,9 @@ class TwoLayerNet(torch.nn.Module):
         """
         h = self.linear1(x)
         h = F.tanh(h)
-        y_pred = self.linear2(h)
-        y_pred = F.tanh(y_pred)
-        return y_pred
+        h = self.linear2(h)
+        h = F.tanh(h)
+        return h
 
 
 def main(train_file, cuda_enabled, params):
@@ -51,7 +51,7 @@ def main(train_file, cuda_enabled, params):
 
     print(model)
     criterion = torch.nn.MSELoss(size_average=False)
-    optimizer = torch.optim.SGD(model.parameters(), lr=alpha, momentum=params["mom"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=alpha)
 
     for epoch in range(epochs):
         for batch_i, (batch_target, batch_data) in enumerate(train_loader):
