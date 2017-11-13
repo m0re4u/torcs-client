@@ -10,7 +10,7 @@ DEGREE_PER_RADIANS = 180 / math.pi
 
 
 class ANNDriver(Driver):
-    model = Model(22, 1000, 3)
+    model = Model(22, 15, 3)
     model.load_state_dict(
     torch.load('/home/parallels/Desktop/Parallels_Shared_Folders/CI2017/torcs-server/torcs-client/nn/NNdriver.pt'))
 
@@ -18,14 +18,12 @@ class ANNDriver(Driver):
         sensors = [carstate.speed_x, carstate.distance_from_center, carstate.angle, *carstate.distances_from_edge]
         y = self.model(Variable(torch.Tensor(sensors)))
         command = Command()
-        # TODO: Fix with self-organising map
-        if y.data[0] > 0.8:
-            command.accelerator = 1.0
-            command.brake = 0.0
-        else:
-            command.accelerator = y.data[0]
-            command.brake = y.data[1]
-        command.steering = y.data[2]
+
+        accelerator, brake, steering = self.smooth_commands(y.data[0], y.data[1], y.data[2])
+
+        command.accelerator = accelerator
+        command.brake = brake
+        command.steering = steering
         self.switch_gear(carstate, command)
         print("---------------------------")
         print("SENSOR:", sensors)
@@ -33,6 +31,18 @@ class ANNDriver(Driver):
         print("Brake", command.brake)
         print("Steering", -command.steering)
         return command
+
+    def smooth_commands(self, accelerator, brake, steering):
+        if accelerator < 0.0:
+            accelerator = 0.0
+
+        if brake < 0.0:
+                brake = 0.0
+        if accelerator > 0.9:
+            accelerator = 1.0
+            brake = 0.0
+
+        return accelerator, brake, steering
 
     def switch_gear(self, carstate, command):
         if carstate.rpm > 8000:

@@ -9,15 +9,12 @@ class Model(nn.Module):
     def __init__(self, input_size, hidden_size, target_size):
         super().__init__()
         self.h1 = nn.Linear(input_size, hidden_size)
-        self.h2 = nn.Linear(hidden_size, hidden_size)
-        self.h3 = nn.Linear(hidden_size, target_size)
+        self.h2 = nn.Linear(hidden_size, target_size)
 
     def forward(self, x):
         x = self.h1(x)
         x = F.tanh(x)
         x = self.h2(x)
-        x = F.tanh(x)
-        x = self.h3(x)
         x = F.tanh(x)
         return x
 
@@ -128,24 +125,30 @@ def run_ff_net():
     #     input_vectors[i] = input_vectors[i][:-1]
 
     input_size = len(input_vectors[0])
-    hidden_size = 1000
+    hidden_size = 15
     target_size = len(target_vectors[0])
-    learning_rate = 1e-05
+    learning_rate = 1e-04
 
     model = Model(input_size, hidden_size, target_size)
     opt = optim.Adam(params=model.parameters(), lr=learning_rate)
     criterion = nn.MSELoss()
 
-    for epoch in range(1000):
-        input = autograd.Variable(torch.FloatTensor(input_vectors))
-        target = autograd.Variable(torch.Tensor(target_vectors))
-        out = model(input)
-        loss = criterion(out, target)
-        model.zero_grad()
-        loss.backward()
-        opt.step()
+    try:
+        for epoch in range(15000):
+            input = autograd.Variable(torch.FloatTensor(input_vectors))
+            target = autograd.Variable(torch.Tensor(target_vectors))
+            out = model(input)
+            loss = criterion(out, target)
+            model.zero_grad()
+            loss.backward()
+            opt.step()
 
-        print('epoch: %i, loss: %f', (epoch, loss.data[0]))
+            print('epoch: %i, loss: %f' % (epoch, loss.data[0]))
+    except KeyboardInterrupt:
+        print('out', out)
+        print('target', target.view(1, -1))
+        print('loss', loss.data[0])
+        torch.save(model.state_dict(), "NNdriver.pt")
 
     print('out', out)
     print('target', target.view(1, -1))
