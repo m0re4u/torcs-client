@@ -28,7 +28,7 @@ class TwoLayerNet(torch.nn.Module):
         h = self.linear1(x)
         h = F.tanh(h)
         y_pred = self.linear2(h)
-        y_pred = F.softmax(y_pred)
+        y_pred = F.tanh(y_pred)
         return y_pred
 
 

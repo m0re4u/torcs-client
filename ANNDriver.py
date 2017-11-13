@@ -20,7 +20,7 @@ class ANNDriver(Driver):
         command = Command()
         command.accelerator = y.data[0]
         command.brake = y.data[1]
-        command.steering = y.data[2]
+        command.steering = -y.data[2]
 
         # Naive switching of gear
         self.switch_gear(carstate, command)
