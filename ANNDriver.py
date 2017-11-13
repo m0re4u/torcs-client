@@ -2,7 +2,7 @@ from pytocl.driver import Driver
 from pytocl.car import State, Command
 import torch
 import math
-from nn.train import TwoLayerNet
+from nn.train import Model
 from torch.autograd import Variable
 
 
@@ -10,19 +10,23 @@ DEGREE_PER_RADIANS = 180 / math.pi
 
 
 class ANNDriver(Driver):
+    model = Model(22, 1000, 3)
+    model.load_state_dict(
+    torch.load('/home/parallels/Desktop/Parallels_Shared_Folders/CI2017/torcs-server/torcs-client/nn/NNdriver.pt'))
+
     def drive(self, carstate: State) -> Command:
-        model = TwoLayerNet(21, 100, 3)
-        model.load_state_dict(torch.load("/home/m0re/projects/uni/ci_vu/torcs-client/nn/NNdriver.pt"))
-        sensors = [carstate.distance_from_center, carstate.angle / DEGREE_PER_RADIANS, *carstate.distances_from_edge]
-        y = model(Variable(torch.Tensor(sensors)))
+        sensors = [carstate.speed_x, carstate.distance_from_center, carstate.angle, *carstate.distances_from_edge]
+        y = self.model(Variable(torch.Tensor(sensors)))
         command = Command()
         command.accelerator = y.data[0]
         command.brake = y.data[1]
         command.steering = -y.data[2]
         self.switch_gear(carstate, command)
         print("---------------------------")
-        print("Angle: {}".format(carstate.angle / DEGREE_PER_RADIANS))
-        print(carstate.distances_from_edge)
+        print("SENSOR:", sensors)
+        print("Accelerate", command.accelerator)
+        print("Brake", command.brake)
+        print("Steering", -command.steering)
         return command
 
     def switch_gear(self, carstate, command):
