@@ -49,7 +49,7 @@ class Driver:
         Optionally implement this event handler to clean up or write data
         before the application is stopped.
         """
-        if self.data_logger:
+        if self.data_logger is not None:
             self.data_logger.close()
             self.data_logger = None
 

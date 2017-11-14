@@ -2,6 +2,8 @@ test/.cache
 __pycache__/
 drivelogs/
 output/
+logs/
+*.pyc
 
 # Ignore pytorch models
 *.pt
