@@ -15,7 +15,7 @@ class ANNDriver(Driver):
 
         # Load model
         self.model = train.TwoLayerNet(22, H, 3)
-        self.model.load_state_dict(torch.load('nn/NNdriverReservoir.pt', map_location=lambda storage, loc: storage))
+        self.model.load_state_dict(torch.load('models/NNdriver.pt', map_location=lambda storage, loc: storage))
 
         # Check if we want to record the actuator & sensor data
         # self.record = False

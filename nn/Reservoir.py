@@ -86,7 +86,7 @@ class Reservoir(nn.Module):
 # end Reservoir
 
 
-def reservoir(train_file, cuda_enabled, params):
+def main(train_file, cuda_enabled, params):
     data = ds.DriverDataset(train_file)
     train_loader = DataLoader(data, batch_size=params["batch"], shuffle=False, num_workers=1)
 
@@ -130,3 +130,55 @@ def reservoir(train_file, cuda_enabled, params):
 
     torch.save(model.state_dict(), "../models/NNdriverReservoir.pt")
     torch.save(initial_state, "../models/initial_state_reservoir.pt")
+
+
+if __name__ == '__main__':
+    import dataset as ds
+    pd.options.mode.chained_assignment = None  # default='warn'
+
+    parser = argparse.ArgumentParser(
+        description="")
+    parser.add_argument(
+        "-f", "--train_file", help="",
+        default="../data/test.csv"
+    )
+    parser.add_argument(
+        "-lr", "--learning_rate", help="Set the learning rate",
+        default="1e-3", type=float
+    )
+    parser.add_argument(
+        "-H", "--hidden", help="Set the number of hidden neurons",
+        default="500", type=int
+    )
+    parser.add_argument(
+        "-e", "--epochs", help="Set the number of epochs to run",
+        default="100", type=int
+    )
+    parser.add_argument(
+        "-b", "--batch", help="Set the batch size",
+        default="10000", type=int
+    )
+    parser.add_argument(
+        "-m", "--momentum", help="Set the momentum of the SGD",
+        default="0.9", type=float
+    )
+    parser.add_argument('--cuda', action='store_true', default=False,
+                        help='enables CUDA training')
+    args = parser.parse_args()
+    cuda_enabled = args.cuda and torch.cuda.is_available()
+
+    if cuda_enabled:
+        print("CUDA is enabled")
+    else:
+        print("CUDA is not enabled")
+
+    param_dict = {
+        "lr": args.learning_rate,
+        "epochs": args.epochs,
+        "hidden": args.hidden,
+        "mom": args.momentum,
+        "batch": args.batch
+    }
+    main(args.train_file, cuda_enabled, param_dict)
+else:
+    from . import dataset as ds
