@@ -73,7 +73,7 @@ class Reservoir(nn.Module):
 
         # For each state
         for index in range(batch_size):
-            x = F.tanh(self.win.mv(u[index, :]) + self.w.mv(x))
+            x = F.tanh(torch.floatself.win.mv(u[index, :]) + self.w.mv(x))
             states[index, :] = x
         # end for
 

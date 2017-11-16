@@ -87,7 +87,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--train_file", help="",
-        default="../data/test.csv"
+        default="../data/test_4_tracks.csv"
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",
@@ -99,7 +99,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-e", "--epochs", help="Set the number of epochs to run",
-        default="1000", type=int
+        default="500", type=int
     )
     parser.add_argument(
         "-b", "--batch", help="Set the batch size",
