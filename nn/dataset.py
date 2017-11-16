@@ -2,6 +2,7 @@ import torch
 from torch.utils.data.dataset import Dataset
 
 import pandas as pd
+import numpy as np
 
 
 class DriverDataset(Dataset):
@@ -19,6 +20,32 @@ class DriverDataset(Dataset):
         # Drop last row
         df.drop(df.tail(1).index, inplace=True)
         self.data = df.as_matrix()
+
+        # Normalize data
+        new_data = []
+        for i, column in enumerate(self.data.transpose()):
+
+            if i < 3:
+                new_data.append(column)
+
+            # Speed -400 --> 400 km/hour
+            if i == 3:
+                new_data.append([(speed + (-400)) / 800 for speed in column])
+
+            # Distance from centre, already normalized
+            if i == 4:
+                new_data.append(column)
+
+            # Angle to track -180 --> 180 degrees
+            if i == 5:
+                new_data.append([(angle + (-180)) / 360 for angle in column])
+
+            # Track edges 0 --> 200 meters
+            if i > 5:
+                new_data.append([distance / 200 for distance in column])
+
+        self.data = np.array(new_data).T
+        print(self.data)
 
     def __len__(self):
         return len(self.data)

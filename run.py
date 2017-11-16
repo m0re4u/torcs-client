@@ -10,7 +10,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--model_file", help="The path to the trained driver model",
-        default="models/NNdriver.pt"
+        default="models/NNdriverReservoir.pt"
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",

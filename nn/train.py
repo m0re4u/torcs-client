@@ -3,10 +3,10 @@ from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
-
 import numpy as np
 import argparse
 import pandas as pd
+import pickle
 
 
 class TwoLayerNet(torch.nn.Module):
@@ -73,7 +73,8 @@ def main(train_file, cuda_enabled, params):
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-        print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
+
+        print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0] / len(x_batch)))
 
     torch.save(model.state_dict(), "NNdriver.pt")
 
@@ -86,23 +87,23 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--train_file", help="",
-        default="../../train_data/aalborg.csv"
+        default="../data/test.csv"
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",
-        default="0.000001", type=float
+        default="1e-3", type=float
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",
-        default="500", type=int
+        default="100", type=int
     )
     parser.add_argument(
         "-e", "--epochs", help="Set the number of epochs to run",
-        default="10000", type=int
+        default="1000", type=int
     )
     parser.add_argument(
         "-b", "--batch", help="Set the batch size",
-        default="10", type=int
+        default="10000", type=int
     )
     parser.add_argument(
         "-m", "--momentum", help="Set the momentum of the SGD",
