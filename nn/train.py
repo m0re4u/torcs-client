@@ -53,28 +53,31 @@ def main(train_file, cuda_enabled, params):
     criterion = torch.nn.MSELoss(size_average=False)
     optimizer = torch.optim.Adam(model.parameters(), lr=alpha)
 
-    for epoch in range(epochs):
-        for batch_i, (batch_target, batch_data) in enumerate(train_loader):
-            if cuda_enabled:
-                batch_data, batch_target = batch_data.cuda(), batch_target.cuda()
-            x_batch = Variable(batch_data)
-            y_batch = Variable(batch_target)
+    try:
+        for epoch in range(epochs):
+            for batch_i, (batch_target, batch_data) in enumerate(train_loader):
+                if cuda_enabled:
+                    batch_data, batch_target = batch_data.cuda(), batch_target.cuda()
+                x_batch = Variable(batch_data)
+                y_batch = Variable(batch_target)
 
-            # Forward pass
-            y_pred = model(x_batch)
-            # print("---")
-            # print("Prediction: ", y_pred)
-            # print("True: ", y_batch)
+                # Forward pass
+                y_pred = model(x_batch)
+                # print("---")
+                # print("Prediction: ", y_pred)
+                # print("True: ", y_batch)
 
-            # Compute and print loss
-            loss = criterion(y_pred, y_batch)
+                # Compute and print loss
+                loss = criterion(y_pred, y_batch)
 
-            # Zero gradients, perform a backward pass, and update the weights.
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                # Zero gradients, perform a backward pass, and update the weights.
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
-        print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0] / len(x_batch)))
+            print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0] / len(x_batch)))
+    except KeyboardInterrupt:
+        torch.save(model.state_dict(), "NNdriver.pt")
 
     torch.save(model.state_dict(), "NNdriver.pt")
 
