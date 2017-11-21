@@ -46,11 +46,11 @@ class ANNDriver(Driver):
         # Naive switching of gear
         self.switch_gear(carstate, command)
 
-        print("---------------------------")
-        print(command)
-        print(carstate.distances_from_edge)
-        print("Speed: {}".format(carstate.speed_x))
-        print("Angle: {}".format(carstate.angle))
+        # print("---------------------------")
+        # print(command)
+        # print(carstate.distances_from_edge)
+        # print("Speed: {}".format(carstate.speed_x))
+        # print("Angle: {}".format(carstate.angle))
 
         if self.record is True:
             sensor_string = ",".join([str(x) for x in sensors]) + "\n"
