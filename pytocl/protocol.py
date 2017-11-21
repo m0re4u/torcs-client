@@ -90,7 +90,7 @@ class Client:
         assert len(angles) == 19, \
             'Inconsistent length {} of range of finder iterable.'.format(
                 len(angles)
-            )
+        )
 
         data = {'init': angles}
         buffer = self.serializer.encode(

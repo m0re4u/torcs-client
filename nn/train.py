@@ -126,5 +126,3 @@ if __name__ == '__main__':
         "batch": args.batch
     }
     main(args.train_file, cuda_enabled, param_dict)
-else:
-    from . import dataset as ds

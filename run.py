@@ -50,7 +50,7 @@ if __name__ == '__main__':
     )
 
     # Init client
-    client = Client(driver=ANNDriver(args.model_file, args.hidden, args.record))
+    client = Client(driver=ANNDriver(args.model_file, args.hidden, args.record), port=args.port)
 
     try:
         # start client loop:
