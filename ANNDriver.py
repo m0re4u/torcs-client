@@ -16,21 +16,21 @@ class ANNDriver(Driver):
         self.model.load_state_dict(torch.load(model_file, map_location=lambda storage, loc: storage))
 
         # Check if we want to record the actuator & sensor data
-        self.record = False
-        if record_train_file is not None:
-            self.record = True
-            self.file_handler = open(record_train_file, 'w')
-            self.file_handler.write("ACCELERATION,BRAKE,STEERING,SPEED,\
-            TRACK_POSITION,ANGLE_TO_TRACK_AXIS,TRACK_EDGE_0,TRACK_EDGE_1,\
-            TRACK_EDGE_2,TRACK_EDGE_3,TRACK_EDGE_4,TRACK_EDGE_5,TRACK_EDGE_6,\
-            TRACK_EDGE_7,TRACK_EDGE_8,TRACK_EDGE_9,TRACK_EDGE_10,\
-            TRACK_EDGE_11,TRACK_EDGE_12,TRACK_EDGE_13,TRACK_EDGE_14,\
-            TRACK_EDGE_15,TRACK_EDGE_16,TRACK_EDGE_17,TRACK_EDGE_18")
+        # self.record = False
+        # if record_train_file is not None:
+        #     self.record = True
+        #     self.file_handler = open(record_train_file, 'w')
+        #     self.file_handler.write("ACCELERATION,BRAKE,STEERING,SPEED,\
+        #     TRACK_POSITION,ANGLE_TO_TRACK_AXIS,TRACK_EDGE_0,TRACK_EDGE_1,\
+        #     TRACK_EDGE_2,TRACK_EDGE_3,TRACK_EDGE_4,TRACK_EDGE_5,TRACK_EDGE_6,\
+        #     TRACK_EDGE_7,TRACK_EDGE_8,TRACK_EDGE_9,TRACK_EDGE_10,\
+        #     TRACK_EDGE_11,TRACK_EDGE_12,TRACK_EDGE_13,TRACK_EDGE_14,\
+        #     TRACK_EDGE_15,TRACK_EDGE_16,TRACK_EDGE_17,TRACK_EDGE_18")
 
-    def __del__(self):
-        if self.record and self.file_handler:
-            self.file_handler.close()
-            self.file_handler = None
+    # def __del__(self):
+    #     if self.record and self.file_handler:
+    #         self.file_handler.close()
+    #         self.file_handler = None
 
     def drive(self, carstate: State) -> Command:
         sensors = [carstate.speed_x, carstate.distance_from_center, carstate.angle, *(carstate.distances_from_edge)]
@@ -46,15 +46,15 @@ class ANNDriver(Driver):
         # Naive switching of gear
         self.switch_gear(carstate, command)
 
-        # print("---------------------------")
-        # print(command)
-        # print(carstate.distances_from_edge)
-        # print("Speed: {}".format(carstate.speed_x))
-        # print("Angle: {}".format(carstate.angle))
+        print("---------------------------")
+        print(command)
+        print(carstate.distances_from_edge)
+        print("Speed: {}".format(carstate.speed_x))
+        print("Angle: {}".format(carstate.angle))
 
-        if self.record is True:
-            sensor_string = ",".join([str(x) for x in sensors]) + "\n"
-            self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
+        # if self.record is True:
+        #     sensor_string = ",".join([str(x) for x in sensors]) + "\n"
+        #     self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
         return command
 
     def switch_gear(self, carstate, command):

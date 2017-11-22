@@ -36,30 +36,29 @@ class Evolution:
         procs = []
         try:
             for i, param in enumerate(range(2)):
-                torch.save(self.model.state_dict(), "/home/m0re/projects/uni/ci_vu/torcs-client/models/evol_driver{}.pt".format(i))
+                torch.save(self.model.state_dict(), "../models/evol_driver{}.pt".format(i))
 
                 print("Child {}".format(i))
                 cmd = [
-                    "python3", "/home/m0re/projects/uni/ci_vu/torcs-client/run.py",
-                    "-f", "/home/m0re/projects/uni/ci_vu/torcs-client/models/evol_driver{}.pt".format(i),
-                    "-r", "/home/m0re/projects/uni/ci_vu/torcs-client/logs/data.log",
+                    "python3", "../run.py",
+                    "-f", "../models/evol_driver{}.pt".format(i),
+                    "-r", "../logs/data.log",
                     "-H", "15",
                     "-p", "{}".format(i + 3001)
                 ]
                 proc = subprocess.Popen(cmd)
                 procs.append(proc)
                 print("Started child with PID {}".format(proc.pid))
-        except KeyboardInterrupt as e:
+        except KeyboardInterrupt:
             for proc in procs:
                 os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
 
         # Start torcs
         start = time.time()
         print("Running torcs at {}".format(start))
-        cmd = ["torcs", "-r",
-               "/home/m0re/projects/uni/ci_vu/torcs-client/race-config/training.xml"]
-        proc = subprocess.run(cmd, stdout=subprocess.PIPE)
-        print(proc)
+        cmd = ["torcs -r ~/Desktop/Parallels_Shared_Folders/CI2017/torcs-server/torcs-client/race-config/training.xml"]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        print(proc.communicate())
         end = time.time()
         print("Finished torcs at {}, took {}".format(end, end - start))
 
@@ -77,7 +76,7 @@ class Evolution:
         for parameter in self.parameters:
             parameter.data += learning_rate * gradient
 
-    def run(self, iterations=4, population_size=20, standard_dev=0.1, learning_rate=1e-3):
+    def run(self, iterations=1, population_size=20, standard_dev=0.1, learning_rate=1e-3):
         for i in range(iterations):
             print("Iteration: {}".format(i))
             noise_vector = np.random.standard_normal(population_size)
@@ -96,4 +95,4 @@ def main(filename):
 
 
 if __name__ == '__main__':
-    main("/home/m0re/projects/uni/ci_vu/torcs-client/models/NNdriver.pt")
+    main("../nn/NNdriver.pt")
