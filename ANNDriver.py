@@ -13,6 +13,7 @@ class ANNDriver(Driver):
 
         # Load model
         self.model = train.TwoLayerNet(22, H, 3)
+        print(model_file)
         self.model.load_state_dict(torch.load(model_file, map_location=lambda storage, loc: storage))
 
         # Check if we want to record the actuator & sensor data
@@ -34,28 +35,30 @@ class ANNDriver(Driver):
 
     def drive(self, carstate: State) -> Command:
         sensors = [carstate.speed_x, carstate.distance_from_center, carstate.angle, *(carstate.distances_from_edge)]
+        sensors = self.normalize_sensors(sensors)
         # Forward pass our model
         y = self.model(Variable(torch.Tensor(sensors)))
 
         # Create command from model output
         command = Command()
-        command.accelerator = y.data[0]
-        command.brake = y.data[1]
-        command.steering = y.data[2]
+        command.accelerator = y.data[0][0]
+        command.brake = y.data[0][1]
+        command.steering = y.data[0][2]
 
         # Naive switching of gear
         self.switch_gear(carstate, command)
 
-        print("---------------------------")
-        print(command)
-        print(carstate.distances_from_edge)
-        print("Speed: {}".format(carstate.speed_x))
-        print("Angle: {}".format(carstate.angle))
+        # print("---------------------------")
+        # print(command)
+        # print(carstate.distances_from_edge)
+        # print("Speed: {}".format(carstate.speed_x))
+        # print("Angle: {}".format(carstate.angle))
 
         # if self.record is True:
         #     sensor_string = ",".join([str(x) for x in sensors]) + "\n"
         #     self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
         return command
+
 
     def switch_gear(self, carstate, command):
         if carstate.rpm > 8000:
@@ -64,3 +67,26 @@ class ANNDriver(Driver):
             command.gear = carstate.gear - 1
         if not command.gear:
             command.gear = carstate.gear or 1
+
+
+    def normalize_sensors(self, sensors):
+        new_sensors = []
+
+        for i, sensor in enumerate(sensors):
+            # Speed -400 --> 400 km/hour
+            if i == 0:
+                new_sensors.append((sensor + (-400)) / 800)
+
+            # Distance from centre, already normalized 
+            if i == 1:
+                new_sensors.append(sensor)
+
+            # Angle to track -180 --> 180 degrees 
+            if i == 2:
+                new_sensors.append((sensor + (-180)) / 360)
+
+            # Track edges 0 --> 200 meters 
+            if i > 2:
+                new_sensors.append(sensor / 200)
+
+        return [new_sensors]

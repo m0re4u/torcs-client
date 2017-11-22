@@ -6,6 +6,7 @@ import train
 import os
 import sys
 import signal
+import glob
 import logging
 
 
@@ -32,6 +33,10 @@ class Evolution:
     def compute_rewards(self, parameter_sets):
         reward_vector = []
 
+        # Remove old drivers:
+        for filename in glob.glob("../models/evol_driver*"):
+            os.remove(filename)
+
         # Start drivers
         procs = []
         try:
@@ -41,7 +46,8 @@ class Evolution:
                 print("Child {}".format(i))
                 cmd = [
                     "python3", "../run.py",
-                    "-f", "../models/evol_driver{}.pt".format(i),
+                    # "-f", "../models/evol_driver{}.pt".format(i),
+                    "-f", "../models/NNdriver.pt",
                     "-r", "../logs/data.log",
                     "-H", "15",
                     "-p", "{}".format(i + 3001)
@@ -95,4 +101,4 @@ def main(filename):
 
 
 if __name__ == '__main__':
-    main("../nn/NNdriver.pt")
+    main("../models/NNdriver.pt")
