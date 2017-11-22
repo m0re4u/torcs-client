@@ -8,34 +8,40 @@ from torch.autograd import Variable
 
 
 class ANNDriver(Driver):
+
     def __init__(self, model_file, H, record_train_file=None):
         super().__init__(False)
 
         # Load model
         self.model = train.TwoLayerNet(22, H, 3)
-        print(model_file)
-        self.model.load_state_dict(torch.load(model_file, map_location=lambda storage, loc: storage))
+        self.model.load_state_dict(torch.load(
+            model_file, map_location=lambda storage, loc: storage))
 
         # Check if we want to record the actuator & sensor data
-        # self.record = False
-        # if record_train_file is not None:
-        #     self.record = True
-        #     self.file_handler = open(record_train_file, 'w')
-        #     self.file_handler.write("ACCELERATION,BRAKE,STEERING,SPEED,\
-        #     TRACK_POSITION,ANGLE_TO_TRACK_AXIS,TRACK_EDGE_0,TRACK_EDGE_1,\
-        #     TRACK_EDGE_2,TRACK_EDGE_3,TRACK_EDGE_4,TRACK_EDGE_5,TRACK_EDGE_6,\
-        #     TRACK_EDGE_7,TRACK_EDGE_8,TRACK_EDGE_9,TRACK_EDGE_10,\
-        #     TRACK_EDGE_11,TRACK_EDGE_12,TRACK_EDGE_13,TRACK_EDGE_14,\
-        #     TRACK_EDGE_15,TRACK_EDGE_16,TRACK_EDGE_17,TRACK_EDGE_18")
+        self.record = False
+        if record_train_file is not None:
+            self.record = True
+            self.file_handler = open(record_train_file, 'w')
+            self.file_handler.write("ACCELERATION,BRAKE,STEERING,SPEED,\
+            TRACK_POSITION,ANGLE_TO_TRACK_AXIS,TRACK_EDGE_0,TRACK_EDGE_1,\
+            TRACK_EDGE_2,TRACK_EDGE_3,TRACK_EDGE_4,TRACK_EDGE_5,TRACK_EDGE_6,\
+            TRACK_EDGE_7,TRACK_EDGE_8,TRACK_EDGE_9,TRACK_EDGE_10,\
+            TRACK_EDGE_11,TRACK_EDGE_12,TRACK_EDGE_13,TRACK_EDGE_14,\
+            TRACK_EDGE_15,TRACK_EDGE_16,TRACK_EDGE_17,TRACK_EDGE_18")
 
-    # def __del__(self):
-    #     if self.record and self.file_handler:
-    #         self.file_handler.close()
-    #         self.file_handler = None
+    def __del__(self):
+        if self.record:
+            self.file_handler.close()
+            self.file_handler = None
 
     def drive(self, carstate: State) -> Command:
-        sensors = [carstate.speed_x, carstate.distance_from_center, carstate.angle, *(carstate.distances_from_edge)]
+        # Select the sensors we need for our model
+        sensors = [carstate.speed_x, carstate.distance_from_center,
+                   carstate.angle, *(carstate.distances_from_edge)]
+
+        # Sensor normalization -> values between 0 and 1
         sensors = self.normalize_sensors(sensors)
+
         # Forward pass our model
         y = self.model(Variable(torch.Tensor(sensors)))
 
@@ -48,19 +54,15 @@ class ANNDriver(Driver):
         # Naive switching of gear
         self.switch_gear(carstate, command)
 
-        # print("---------------------------")
-        # print(command)
-        # print(carstate.distances_from_edge)
-        # print("Speed: {}".format(carstate.speed_x))
-        # print("Angle: {}".format(carstate.angle))
-
-        # if self.record is True:
-        #     sensor_string = ",".join([str(x) for x in sensors]) + "\n"
-        #     self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
+        if self.record is True:
+            sensor_string = ",".join([str(x) for x in sensors]) + "\n"
+            self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
         return command
 
-
     def switch_gear(self, carstate, command):
+        """
+        Naive switching of gears
+        """
         if carstate.rpm > 8000:
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2500:
@@ -68,8 +70,10 @@ class ANNDriver(Driver):
         if not command.gear:
             command.gear = carstate.gear or 1
 
-
     def normalize_sensors(self, sensors):
+        """
+        Normalize all sensor values to be between 0 and 1
+        """
         new_sensors = []
 
         for i, sensor in enumerate(sensors):

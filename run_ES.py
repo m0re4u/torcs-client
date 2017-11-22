@@ -2,7 +2,7 @@ import numpy as np
 import subprocess
 import torch
 import time
-import train
+import nn.train
 import os
 import sys
 import signal
@@ -12,7 +12,12 @@ import logging
 
 class Evolution:
     def __init__(self, filename):
-        self.model = train.TwoLayerNet(22, 15, 3)
+        # Get the root of our project folder
+        self.torcspath = os.path.dirname(os.path.realpath(__file__))
+        print(self.torcspath)
+
+        # Init model
+        self.model = nn.train.TwoLayerNet(22, 15, 3)
         self.model.load_state_dict(torch.load(filename, map_location=lambda storage, loc: storage))
         self.parameters = self.model.parameters()
 
@@ -34,21 +39,20 @@ class Evolution:
         reward_vector = []
 
         # Remove old drivers:
-        for filename in glob.glob("../models/evol_driver*"):
+        for filename in glob.glob("models/evol_driver*"):
             os.remove(filename)
 
         # Start drivers
         procs = []
         try:
             for i, param in enumerate(range(2)):
-                torch.save(self.model.state_dict(), "../models/evol_driver{}.pt".format(i))
+                torch.save(self.model.state_dict(), "models/evol_driver{}.pt".format(i))
 
                 print("Child {}".format(i))
                 cmd = [
-                    "python3", "../run.py",
-                    # "-f", "../models/evol_driver{}.pt".format(i),
-                    "-f", "../models/NNdriver.pt",
-                    "-r", "../logs/data.log",
+                    "python3", self.torcspath + "/run.py",
+                    # "-f", self.modelspath + "/evol_driver{}.pt".format(i),
+                    "-f", "models/NNdriver.pt",
                     "-H", "15",
                     "-p", "{}".format(i + 3001)
                 ]
@@ -62,11 +66,14 @@ class Evolution:
         # Start torcs
         start = time.time()
         print("Running torcs at {}".format(start))
-        cmd = ["torcs -r ~/Desktop/Parallels_Shared_Folders/CI2017/torcs-server/torcs-client/race-config/training.xml"]
+        cmd = ["torcs -r " + self.torcspath + "/race-config/training.xml"]
         proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, shell=True)
+        print("-------")
+        print("Torcs results:")
         print(proc.communicate())
         end = time.time()
         print("Finished torcs at {}, took {}".format(end, end - start))
+        print("-------")
 
         # TODO: Get rewards from torcs
 
@@ -101,4 +108,4 @@ def main(filename):
 
 
 if __name__ == '__main__':
-    main("../models/NNdriver.pt")
+    main("models/NNdriver.pt")
