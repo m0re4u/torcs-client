@@ -77,6 +77,7 @@ def main(train_file, cuda_enabled, params):
 
             print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0] / len(x_batch)))
     except KeyboardInterrupt:
+        print("Save that awesome file")
         torch.save(model.state_dict(), "NNdriver.pt")
 
     torch.save(model.state_dict(), "NNdriver.pt")
@@ -90,7 +91,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--train_file", help="",
-        default="../data/test_4_tracks.csv"
+        default="../data/test.csv"
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",
@@ -98,11 +99,11 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",
-        default="100", type=int
+        default="15", type=int
     )
     parser.add_argument(
         "-e", "--epochs", help="Set the number of epochs to run",
-        default="500", type=int
+        default="10000", type=int
     )
     parser.add_argument(
         "-b", "--batch", help="Set the batch size",
