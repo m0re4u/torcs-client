@@ -119,8 +119,39 @@ class Evolution:
         results = self.get_results()
         return results
 
-    def combine_results(self, rank, time):
-        return (self.population_size - rank) / np.sum(self.population_size)
+    def combine_results(self, results):
+        car_crashed = False
+
+        for rank, driver_index, _, time in results:
+            if time == 0:
+                car_crashed = True
+
+        rewards = []
+        for rank, driver_index, _, time in results:
+            result = 0
+
+            # Did not complete all labs at Aalborg track
+            if time < 220:
+                rewards.append(result)
+            else:
+                # Did complete the laps, hence calculate the score
+
+                # Time component
+                result += (300 / time)
+
+                # Overtaking component
+                if not car_crashed:
+                    start_rank = driver_index + 1
+                    result += 2 * (start_rank - rank)
+
+                # Minimum of 0
+                if result < 0:
+                    result = 0
+
+                rewards.append(result)
+
+        return rewards
+
 
     def compute_rewards(self, parameter_sets):
         reward_vector = np.zeros(self.population_size)
@@ -144,8 +175,8 @@ class Evolution:
                 os.killpg(os.getpgid(proc), signal.SIGTERM)
 
         print("Race results:\n {}".format("\n ".join(str(r) for r in results)))
-        for rank, driver_index, _, time in results:
-            reward_vector[driver_index] = self.combine_results(rank, time)
+
+        reward_vector = self.combine_results(results)
         print("Rewards:\n {}".format(reward_vector))
         return reward_vector
 
