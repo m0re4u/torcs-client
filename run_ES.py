@@ -9,6 +9,7 @@ import signal
 import glob
 import logging
 import argparse
+from copy import deepcopy
 from bs4 import BeautifulSoup
 
 
@@ -17,12 +18,14 @@ class Evolution:
     def __init__(self, model_file, exec_params):
         # Get the root of our project folder
         self.torcspath = os.path.dirname(os.path.realpath(__file__))
+        self.modelspath = os.path.join(self.torcspath, "models")
 
         # Init model
         self.model = nn.train.TwoLayerNet(22, 15, 3)
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
-        self.parameters = self.model.parameters()
+        # Copy the Tensors in the state_dict
+        self.parameters = self.model.state_dict()
 
         # Executable config
         self.headless = exec_params['headless']
@@ -31,11 +34,10 @@ class Evolution:
     def get_parameter_sets(self, standard_dev, noise_vector):
         parameter_sets = []
         for i in range(len(noise_vector)):
-            new_parameter_set = self.parameters
+            new_parameter_set = deepcopy(self.parameters)
             noise = noise_vector[i]
-
-            for parameter in new_parameter_set:
-                parameter.data += standard_dev * noise
+            for param_name, param_tensor in new_parameter_set.items():
+                param_tensor += standard_dev * noise
 
             parameter_sets.append(new_parameter_set)
 
@@ -59,25 +61,25 @@ class Evolution:
             soup = BeautifulSoup(fd, 'xml')
         result_soup = soup.find('section', attrs={'name': 'Results'})
         rank_soup = result_soup.find('section', attrs={'name': 'Rank'})
-        ranks = [
+        results = [
             (
+                # Final position
                 int(section['name']),
-                section.find('attstr', attrs={'name': 'name'})['val']
-            )
-            for section in rank_soup.findAll('section')
-        ]
-        times = [
-            (
-                int(section['name']),
+                # Driver index
+                int(section.find('attnum', attrs={'name': 'index'})['val']),
+                # Driver name
+                section.find('attstr', attrs={'name': 'name'})['val'],
+                # Driver time
                 float(section.find('attnum', attrs={'name': 'time'})['val'])
             )
             for section in rank_soup.findAll('section')
         ]
-        ranking = list(zip(*sorted(ranks)))
-        # contains [(ordered list of driver ids, ordered list of driver names)]
-        print(ranking)
-        # contains [(driverid, time)]
-        print(times)
+        return results
+
+    def rank_to_reward(self, ranking):
+
+        for i, name in enumerate(ranking):
+            pass
 
     def compute_rewards(self, parameter_sets):
         reward_vector = []
@@ -90,11 +92,12 @@ class Evolution:
         procs = []
         try:
             for i, param in enumerate(parameter_sets):
-                # torch.save(param, "models/evol_driver{}.pt".format(i))
+                # Save current parameter set for the client to read in
+                torch.save(param, "models/evol_driver{}.pt".format(i))
                 cmd = [
                     "python3", self.torcspath + "/run.py",
-                    # "-f", self.modelspath + "/evol_driver{}.pt".format(i),
-                    "-f", "models/NNdriver.pt",
+                    "-f", (self.modelspath + "/evol_driver{}.pt").format(i),
+                    # "-f", "models/NNdriver.pt",
                     "-H", "15",
                     "-p", "{}".format(i + 3001)
                 ]
@@ -123,9 +126,10 @@ class Evolution:
         for line in res[0].split("\n"):
             print("[OUTPUT] {}".format(line))
         print("-------")
-        self.get_results()
+        results = self.get_results()
+        print(results)
 
-        # TODO: Get rewards from torcs
+        # TODO: Process results from torcs
 
         return reward_vector
 
@@ -136,8 +140,8 @@ class Evolution:
         for i, reward in enumerate(reward_vector):
             gradient += (1 / (n * standard_dev)) * reward * noise_vector[i]
 
-        for parameter in self.parameters:
-            parameter.data += learning_rate * gradient
+        for param_name, param_tensor in self.parameters.items():
+            param_tensor += learning_rate * gradient
 
     def run(self, iterations=1, population_size=20, standard_dev=0.1, learning_rate=1e-3):
         for i in range(iterations):
@@ -154,6 +158,7 @@ class Evolution:
 
 def main(model_file, exec_params, es_params):
     ev = Evolution(model_file, exec_params)
+    print("Running with ES parameters:\n {}".format(es_params))
     ev.run(
         iterations=es_params["iterations"],
         population_size=es_params["population_size"],
@@ -181,7 +186,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Learning rate of the ES algorithm",
-        default=1e-3, type=float
+        default=1e-6, type=float
     )
     parser.add_argument(
         "-c", "--race_config", help="race configuration file (xml)",
