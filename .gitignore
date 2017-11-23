@@ -3,6 +3,7 @@ __pycache__/
 drivelogs/
 output/
 logs/
+.idea
 *.pyc
 
 # Ignore pytorch models

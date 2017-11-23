@@ -15,7 +15,7 @@ from bs4 import BeautifulSoup
 
 class Evolution:
 
-    def __init__(self, model_file, exec_params):
+    def __init__(self, model_file, exec_params, es_params):
         # Get the root of our project folder
         self.torcspath = os.path.dirname(os.path.realpath(__file__))
         self.modelspath = os.path.join(self.torcspath, "models")
@@ -31,17 +31,26 @@ class Evolution:
         self.headless = exec_params['headless']
         self.race_config = os.path.join(self.torcspath, exec_params['race_config'])
 
-    def get_parameter_sets(self, standard_dev, noise_vector):
+        self.iterations = es_params['iterations']
+        self.population_size = es_params['population_size']
+        self.standard_dev = es_params['standard_dev']
+        self.learning_rate = es_params['learning_rate']
+
+    def noise_parameter_sets(self):
         parameter_sets = []
-        for i in range(len(noise_vector)):
+        noise_sets = []
+        for i in range(self.population_size):
             new_parameter_set = deepcopy(self.parameters)
-            noise = noise_vector[i]
+            new_noise = []
             for param_name, param_tensor in new_parameter_set.items():
-                param_tensor += standard_dev * noise
+                noise = torch.Tensor(np.random.normal(size=param_tensor.size()))
+                param_tensor += self.standard_dev * noise
+                new_noise.append(noise)
 
             parameter_sets.append(new_parameter_set)
+            noise_sets.append(new_noise)
 
-        return parameter_sets
+        return parameter_sets, noise_sets
 
     def get_results(self):
         result_path = os.path.expanduser("~/.torcs/results")
@@ -76,40 +85,22 @@ class Evolution:
         ]
         return results
 
-    def rank_to_reward(self, ranking):
+    def init_drivers(self, index, params):
+        # Save current parameter set for the client to read in
+        torch.save(params, "models/evol_driver{}.pt".format(index))
+        cmd = [
+            "python3", self.torcspath + "/run.py",
+            "-f", (self.modelspath + "/evol_driver{}.pt").format(index),
+            # "-f", "models/NNdriver.pt",
+            "-H", "15",
+            "-p", "{}".format(index + 3001)
+        ]
+        proc = subprocess.Popen(cmd)
+        print("Started child {} with PID {} on port {}".format(
+            index, proc.pid, 3001 + index))
+        return proc.pid
 
-        for i, name in enumerate(ranking):
-            pass
-
-    def compute_rewards(self, parameter_sets):
-        reward_vector = []
-
-        # Remove old drivers:
-        for filename in glob.glob("models/evol_driver*"):
-            os.remove(filename)
-
-        # Start drivers
-        procs = []
-        try:
-            for i, param in enumerate(parameter_sets):
-                # Save current parameter set for the client to read in
-                torch.save(param, "models/evol_driver{}.pt".format(i))
-                cmd = [
-                    "python3", self.torcspath + "/run.py",
-                    "-f", (self.modelspath + "/evol_driver{}.pt").format(i),
-                    # "-f", "models/NNdriver.pt",
-                    "-H", "15",
-                    "-p", "{}".format(i + 3001)
-                ]
-                proc = subprocess.Popen(cmd)
-                procs.append(proc)
-                print("Started child {} with PID {} on port {}".format(
-                    i, proc.pid, 3001 + i))
-        except KeyboardInterrupt:
-            for proc in procs:
-                os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
-
-        # Start torcs
+    def run_torcs(self):
         start = time.time()
         print("Running torcs at {}".format(start))
         if self.headless:
@@ -121,50 +112,81 @@ class Evolution:
         res = proc.communicate()
         end = time.time()
         print("Finished torcs at {}, took {}".format(end, end - start))
-        print("torcs output:")
         print("-------")
         for line in res[0].split("\n"):
             print("[OUTPUT] {}".format(line))
         print("-------")
         results = self.get_results()
+        return results
+
+    def combine_results(self, rank, time):
+        return (self.population_size - rank) / np.sum(self.population_size)
+
+    def compute_rewards(self, parameter_sets):
+        reward_vector = np.zeros(self.population_size)
+
+        # Remove old drivers:
+        for filename in glob.glob("models/evol_driver*"):
+            os.remove(filename)
+
+        # Start drivers
+        procs = []
+        try:
+            for i, param in enumerate(parameter_sets):
+                proc = self.init_drivers(i, param)
+                procs.append(proc)
+
+            # Start torcs and wait for it to finish
+            results = self.run_torcs()
+        except Exception as e:
+            print("Error: {}".format(e))
+            for proc in procs:
+                os.killpg(os.getpgid(proc), signal.SIGTERM)
+
         print(results)
-
-        # TODO: Process results from torcs
-
+        for rank, driver_index, _, time in results:
+            reward_vector[driver_index] = self.combine_results(rank, time)
+        print(reward_vector)
         return reward_vector
 
-    def update_parameters(self, learning_rate, reward_vector, standard_dev, noise_vector):
-        n = len(reward_vector)
-
-        gradient = 0
+    def update_parameters(self, reward_vector, noise_sets):
+        gradient = []
+        for _, p in self.parameters.items():
+            gradient.append(torch.zeros(p.size()))
+        # Per reward, update the parameters with higher scoring reward having
+        # a larger weight
         for i, reward in enumerate(reward_vector):
-            gradient += (1 / (n * standard_dev)) * reward * noise_vector[i]
+            # Multiple sets of parameters
+            for j, noise in enumerate(noise_sets[i]):
+                if self.standard_dev == 0:
+                    update = (1 / self.population_size) * reward * noise
+                else:
+                    update = ((self.population_size * self.standard_dev)) * reward * noise
+                    print(self.population_size * self.standard_dev)
 
-        for param_name, param_tensor in self.parameters.items():
-            param_tensor += learning_rate * gradient
+                gradient[j] += update
 
-    def run(self, iterations=1, population_size=20, standard_dev=0.1, learning_rate=1e-3):
-        for i in range(iterations):
+        print(gradient)
+        for i, (param_name, param_tensor) in enumerate(self.parameters.items()):
+            param_tensor += self.learning_rate * gradient[i]
+
+    def run(self):
+        for i in range(self.iterations):
             print("Iteration: {}".format(i))
-            noise_vector = np.random.standard_normal(population_size)
-
-            parameter_sets = self.get_parameter_sets(
-                standard_dev, noise_vector)
+            # Get noised parameter sets
+            parameter_sets, noise_sets = self.noise_parameter_sets()
+            # Compute reward based on a simulated race
             reward_vector = self.compute_rewards(parameter_sets)
+            # Update parameters using the noised parameters and the race outcome
+            self.update_parameters(reward_vector, noise_sets)
 
-            self.update_parameters(learning_rate, reward_vector,
-                                   standard_dev, noise_vector)
+        torch.save(self.parameters, "models/final.pt".format(index))
 
 
 def main(model_file, exec_params, es_params):
-    ev = Evolution(model_file, exec_params)
+    ev = Evolution(model_file, exec_params, es_params)
     print("Running with ES parameters:\n {}".format(es_params))
-    ev.run(
-        iterations=es_params["iterations"],
-        population_size=es_params["population_size"],
-        standard_dev=es_params["standard_dev"],
-        learning_rate=es_params["learning_rate"]
-    )
+    ev.run()
 
 
 if __name__ == '__main__':
@@ -182,11 +204,11 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-s", "--standard_dev", help="",
-        default=0.1, type=float
+        default=1e-06, type=float
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Learning rate of the ES algorithm",
-        default=1e-6, type=float
+        default=1e-06, type=float
     )
     parser.add_argument(
         "-c", "--race_config", help="race configuration file (xml)",
