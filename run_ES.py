@@ -143,10 +143,10 @@ class Evolution:
             for proc in procs:
                 os.killpg(os.getpgid(proc), signal.SIGTERM)
 
-        print(results)
+        print("Race results:\n {}".format("\n ".join(str(r) for r in results)))
         for rank, driver_index, _, time in results:
             reward_vector[driver_index] = self.combine_results(rank, time)
-        print(reward_vector)
+        print("Rewards:\n {}".format(reward_vector))
         return reward_vector
 
     def update_parameters(self, reward_vector, noise_sets):
@@ -162,11 +162,8 @@ class Evolution:
                     update = (1 / self.population_size) * reward * noise
                 else:
                     update = ((self.population_size * self.standard_dev)) * reward * noise
-                    print(self.population_size * self.standard_dev)
-
                 gradient[j] += update
 
-        print(gradient)
         for i, (param_name, param_tensor) in enumerate(self.parameters.items()):
             param_tensor += self.learning_rate * gradient[i]
 
@@ -179,8 +176,10 @@ class Evolution:
             reward_vector = self.compute_rewards(parameter_sets)
             # Update parameters using the noised parameters and the race outcome
             self.update_parameters(reward_vector, noise_sets)
+            if i % 5 == 0 and i != 0:
+                torch.save(self.parameters, "models/output_gen{}.pt".format(i))
 
-        torch.save(self.parameters, "models/final.pt".format(index))
+        torch.save(self.parameters, "models/output_gen_end.pt")
 
 
 def main(model_file, exec_params, es_params):
