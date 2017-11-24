@@ -120,11 +120,6 @@ class Evolution:
         return results
 
     def combine_results(self, results):
-        car_crashed = False
-
-        for rank, driver_index, _, time in results:
-            if time == 0:
-                car_crashed = True
 
         rewards = []
         for rank, driver_index, _, time in results:
@@ -136,13 +131,18 @@ class Evolution:
             else:
                 # Did complete the laps, hence calculate the score
 
+                # Check how many cars in front crashed
+                num_cars_crashed = 0
+                for rank2, driver_index2, _, time2 in results:
+                    if driver_index2 < driver_index and time2 < 220:
+                        num_cars_crashed += 1
+
                 # Time component
-                result += (300 / time)
+                result += (50000 / time)
 
                 # Overtaking component
-                if not car_crashed:
-                    start_rank = driver_index + 1
-                    result += 2 * (start_rank - rank)
+                start_rank = driver_index + 1
+                result += 50 * (start_rank - rank - num_cars_crashed)
 
                 # Minimum of 0
                 if result < 0:
@@ -193,24 +193,29 @@ class Evolution:
                     update = (1 / self.population_size) * reward * noise
                 else:
                     update = ((self.population_size * self.standard_dev)) * reward * noise
+
                 gradient[j] += update
 
         for i, (param_name, param_tensor) in enumerate(self.parameters.items()):
             param_tensor += self.learning_rate * gradient[i]
 
     def run(self):
-        for i in range(self.iterations):
-            print("Iteration: {}".format(i))
-            # Get noised parameter sets
-            parameter_sets, noise_sets = self.noise_parameter_sets()
-            # Compute reward based on a simulated race
-            reward_vector = self.compute_rewards(parameter_sets)
-            # Update parameters using the noised parameters and the race outcome
-            self.update_parameters(reward_vector, noise_sets)
-            if i % 5 == 0 and i != 0:
-                torch.save(self.parameters, "models/output_gen{}.pt".format(i))
+        try:
+            for i in range(self.iterations):
+                print("Iteration: {}".format(i))
+                # Get noised parameter sets
+                parameter_sets, noise_sets = self.noise_parameter_sets()
+                # Compute reward based on a simulated race
+                reward_vector = self.compute_rewards(parameter_sets)
+                # Update parameters using the noised parameters and the race outcome
+                self.update_parameters(reward_vector, noise_sets)
+                if i % 5 == 0 and i != 0:
+                    torch.save(self.parameters, "models/output_gen{}.pt".format(i))
 
-        torch.save(self.parameters, "models/output_gen_end.pt")
+            torch.save(self.parameters, "models/output_gen_end.pt")
+        except KeyboardInterrupt:
+            print("Save model due to interrupt")
+            torch.save(self.parameters, "models/output_gen_end.pt")
 
 
 def main(model_file, exec_params, es_params):
