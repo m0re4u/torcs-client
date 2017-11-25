@@ -6,7 +6,11 @@ import torch.nn.functional as F
 
 import numpy as np
 import argparse
+import os
 import pandas as pd
+
+from os import listdir
+from os.path import isfile, join
 
 
 class TwoLayerNet(torch.nn.Module):
@@ -33,7 +37,24 @@ class TwoLayerNet(torch.nn.Module):
 
 
 def main(train_file, cuda_enabled, params):
-    data = ds.DriverDataset(train_file)
+    if train_file == "":
+        os.remove("../csv_data/out.csv")
+        mypath = "../csv_data"
+        train_files = [mypath + "/" + f for f in listdir(mypath) if not f.endswith("out.csv") and f.endswith(".csv")]
+    else:
+        train_files = [train_file]
+
+    print("Start creating the data csv file")
+    fout = open("../csv_data/out.csv", "a")
+    for file in train_files:
+        for line in open(file):
+            fout.write(line)
+    fout.close()
+
+    print("Data csv prepared for loading")
+    print("Convert csv to data")
+
+    data = ds.DriverDataset("../csv_data/out.csv")
     train_loader = DataLoader(data, batch_size=params["batch"], shuffle=False, num_workers=1)
 
     H = params["hidden"]  # number of hidden neurons
@@ -53,29 +74,33 @@ def main(train_file, cuda_enabled, params):
     criterion = torch.nn.MSELoss(size_average=False)
     optimizer = torch.optim.Adam(model.parameters(), lr=alpha)
 
-    for epoch in range(epochs):
-        for batch_i, (batch_target, batch_data) in enumerate(train_loader):
-            if cuda_enabled:
-                batch_data, batch_target = batch_data.cuda(), batch_target.cuda()
-            x_batch = Variable(batch_data)
-            y_batch = Variable(batch_target)
+    try:
+        for epoch in range(epochs):
+            for batch_i, (batch_target, batch_data) in enumerate(train_loader):
+                if cuda_enabled:
+                    batch_data, batch_target = batch_data.cuda(), batch_target.cuda()
+                x_batch = Variable(batch_data)
+                y_batch = Variable(batch_target)
 
-            # Forward pass
-            y_pred = model(x_batch)
-            # print("---")
-            # print("Prediction: ", y_pred)
-            # print("True: ", y_batch)
+                # Forward pass
+                y_pred = model(x_batch)
+                # print("---")
+                # print("Prediction: ", y_pred)
+                # print("True: ", y_batch)
 
-            # Compute and print loss
-            loss = criterion(y_pred, y_batch)
+                # Compute and print loss
+                loss = criterion(y_pred, y_batch)
 
-            # Zero gradients, perform a backward pass, and update the weights.
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
-        print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
+                # Zero gradients, perform a backward pass, and update the weights.
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+            print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
+    except KeyboardInterrupt:
+        print("Save model")
+        torch.save(model.state_dict(), "../models/NNdriver.pt")
 
-    torch.save(model.state_dict(), "NNdriver.pt")
+    torch.save(model.state_dict(), "../models/NNdriver.pt")
 
 
 if __name__ == '__main__':
@@ -86,7 +111,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--train_file", help="",
-        default="aalborg.csv"
+        default=""
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",

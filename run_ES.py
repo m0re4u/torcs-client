@@ -200,21 +200,14 @@ class Evolution:
             param_tensor += self.learning_rate * gradient[i]
 
     def run(self):
-        try:
-            for i in range(self.iterations):
-                print("Iteration: {}".format(i))
-                # Get noised parameter sets
-                parameter_sets, noise_sets = self.noise_parameter_sets()
-                # Compute reward based on a simulated race
-                reward_vector = self.compute_rewards(parameter_sets)
-                # Update parameters using the noised parameters and the race outcome
-                self.update_parameters(reward_vector, noise_sets)
-                if i % 5 == 0 and i != 0:
-                    torch.save(self.parameters, "models/output_gen{}.pt".format(i))
-
-            torch.save(self.parameters, "models/output_gen_end.pt")
-        except KeyboardInterrupt:
-            print("Save model due to interrupt")
+        for i in range(self.iterations):
+            print("Iteration: {}".format(i))
+            # Get noised parameter sets
+            parameter_sets, noise_sets = self.noise_parameter_sets()
+            # Compute reward based on a simulated race
+            reward_vector = self.compute_rewards(parameter_sets)
+            # Update parameters using the noised parameters and the race outcome
+            self.update_parameters(reward_vector, noise_sets)
             torch.save(self.parameters, "models/output_gen_end.pt")
 
 
