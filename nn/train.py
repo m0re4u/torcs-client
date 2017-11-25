@@ -38,7 +38,8 @@ class TwoLayerNet(torch.nn.Module):
 
 def main(train_file, cuda_enabled, params):
     if train_file == "":
-        os.remove("../csv_data/out.csv")
+        if os.path.isfile("../csv_data/out.csv"):
+            os.remove("../csv_data/out.csv")
         mypath = "../csv_data"
         train_files = [mypath + "/" + f for f in listdir(mypath) if not f.endswith("out.csv") and f.endswith(".csv")]
     else:
