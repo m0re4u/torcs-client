@@ -37,23 +37,24 @@ class TwoLayerNet(torch.nn.Module):
 
 
 def main(train_file, cuda_enabled, params):
-    if os.path.isfile("../csv_data/out.csv"):
-        os.remove("../csv_data/out.csv")
+    if not os.path.isfile("../csv_data/out.csv"):
+        print("out.csv not found")
+        if train_file == "":
+            mypath = "../csv_data"
+            train_files = [mypath + "/" + f for f in listdir(mypath) if
+                           not f.endswith("out.csv") and f.endswith(".csv")]
+        else:
+            train_files = [train_file]
 
-    if train_file == "":
-        mypath = "../csv_data"
-        train_files = [mypath + "/" + f for f in listdir(mypath) if not f.endswith("out.csv") and f.endswith(".csv")]
-    else:
-        train_files = [train_file]
+        print(train_files)
 
-    print(train_files)
+        print("Start creating the data csv file")
+        fout = open("../csv_data/out.csv", "a")
+        for file in train_files:
+            for line in open(file):
+                fout.write(line)
+        fout.close()
 
-    print("Start creating the data csv file")
-    fout = open("../csv_data/out.csv", "a")
-    for file in train_files:
-        for line in open(file):
-            fout.write(line)
-    fout.close()
 
     print("Data csv prepared for loading")
     print("Convert csv to data")
