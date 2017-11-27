@@ -2,6 +2,7 @@ from pytocl.driver import Driver
 from pytocl.car import State, Command
 import torch
 import math
+import numpy as np
 import logging
 from nn import train
 from torch.autograd import Variable
