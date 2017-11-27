@@ -41,7 +41,7 @@ class ThreeLayerNet(torch.nn.Module):
         In the constructor we instantiate two nn.Linear modules and assign them as
         member variables.
         """
-        super(TwoLayerNet, self).__init__()
+        super(ThreeLayerNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
         self.linear2 = torch.nn.Linear(H, H)
         self.linear3 = torch.nn.Linear(H, D_out)
