@@ -164,9 +164,9 @@ def main(train_file, cuda_enabled, params):
             print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
     except KeyboardInterrupt:
         print("Save model")
-        torch.save(model.state_dict(), "../models/NNdriver.pt")
+        torch.save(model.state_dict(), "../models/NNdriver{}-{}.pt".format(params['depth'], H))
 
-    torch.save(model.state_dict(), "../models/NNdriver.pt")
+    torch.save(model.state_dict(), "../models/NNdriver{}-{}.pt".format(params['depth'], H))
 
 
 if __name__ == '__main__':
