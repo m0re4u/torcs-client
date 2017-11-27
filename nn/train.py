@@ -60,6 +60,37 @@ class ThreeLayerNet(torch.nn.Module):
         h = F.tanh(h)
         return h
 
+class FiveLayerNet(torch.nn.Module):
+    def __init__(self, D_in, H, D_out):
+        """
+        In the constructor we instantiate two nn.Linear modules and assign them as
+        member variables.
+        """
+        super(FiveLayerNet, self).__init__()
+        self.linear1 = torch.nn.Linear(D_in, H)
+        self.linear2 = torch.nn.Linear(H, H)
+        self.linear3 = torch.nn.Linear(H, H)
+        self.linear4 = torch.nn.Linear(H, H)
+        self.linear5 = torch.nn.Linear(H, D_out)
+
+    def forward(self, x):
+        """
+        In the forward function we accept a Variable of input data and we must return
+        a Variable of output data. We can use Modules defined in the constructor as
+        well as arbitrary operators on Variables.
+        """
+        h = self.linear1(x)
+        h = F.tanh(h)
+        h = self.linear2(h)
+        h = F.tanh(h)
+        h = self.linear3(h)
+        h = F.tanh(h)
+        h = self.linear4(h)
+        h = F.tanh(h)
+        h = self.linear5(h)
+        h = F.tanh(h)
+        return h
+
 
 def main(train_file, cuda_enabled, params):
     if not os.path.isfile("../csv_data/out.csv"):
@@ -98,8 +129,10 @@ def main(train_file, cuda_enabled, params):
 
     if params["depth"] == 2:
         model = TwoLayerNet(D_in, H, D_out)
-    else:
+    elif params["depth"] == 3:
         model = ThreeLayerNet(D_in, H, D_out)
+    else:
+        model = FiveLayerNet(D_in, H, D_out)
     if cuda_enabled:
         model.cuda()
 
