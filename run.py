@@ -13,11 +13,15 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--model_file", help="The path to the trained driver model",
-        default=os.path.dirname(filepath) + "/models/NNdriver.pt"
+        default=os.path.dirname(filepath) + "/models/NNdriver2-10.pt"
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",
-        default="15", type=int
+        default="10", type=int
+    )
+    parser.add_argument(
+        "-d", "--depth", help="Set the number of layers",
+        default="2", type=int
     )
     parser.add_argument(
         "-r", "--record", help="The path to a file that will contain recorded \
@@ -58,7 +62,7 @@ if __name__ == '__main__':
 
     # Init client
     client = Client(driver=ANNDriver(args.model_file,
-                                     args.hidden, args.record), port=args.port)
+                                     args.hidden, args.depth, args.record), port=args.port)
 
     try:
         # start client loop:

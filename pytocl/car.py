@@ -34,7 +34,7 @@ class State(Value):
 
     Attributes:
         sensor_dict: Dictionary of sensor key value pairs in string form.
-        angle: Angle between car direction and track axis, [-180;180], deg.
+        angle: Angle between car direction and track axis, [-PI;PI], rad.
         current_lap_time: Time spent in current lap, [0;inf[, s.
         damage: Damage points, 0 means no damage, [0;inf[, points.
         distance_from_start:

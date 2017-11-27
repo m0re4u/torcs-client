@@ -9,11 +9,18 @@ from torch.autograd import Variable
 
 class ANNDriver(Driver):
 
-    def __init__(self, model_file, H, record_train_file=None):
+    def __init__(self, model_file, H, depth, record_train_file=None):
         super().__init__(False)
 
+        # Select right model
+        if depth == 3:
+            self.model = train.ThreeLayerNet(22, H, 3)
+        elif depth == 5:
+            self.model = train.FiveLayerNet(22, H, 3)
+        else:
+            print("Using depth=2")
+            self.model = train.TwoLayerNet(22, H, 3)
         # Load model
-        self.model = train.TwoLayerNet(22, H, 3)
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
 
@@ -51,6 +58,10 @@ class ANNDriver(Driver):
         command.brake = y.data[0][1]
         command.steering = y.data[0][2]
 
+        print("Accelerate: {}".format(command.accelerator))
+        print("Brake:      {}".format(command.brake))
+        print("Steer:      {}".format(command.steering))
+
         # Naive switching of gear
         self.switch_gear(carstate, command)
 
@@ -85,9 +96,9 @@ class ANNDriver(Driver):
             if i == 1:
                 new_sensors.append(sensor)
 
-            # Angle to track -180 --> 180 degrees 
+            # Angle to track -pi --> pi radians
             if i == 2:
-                new_sensors.append((sensor + (-180)) / 360)
+                new_sensors.append((sensor + (-np.pi)) / (2 * np.pi))
 
             # Track edges 0 --> 200 meters 
             if i > 2:

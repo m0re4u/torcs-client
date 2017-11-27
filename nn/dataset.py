@@ -35,9 +35,9 @@ class DriverDataset(Dataset):
             if i == 4:
                 new_data.append(column)
 
-            # Angle to track -180 --> 180 degrees
+            # Angle to track -pi --> pi radians
             if i == 5:
-                new_data.append([(angle + (-180)) / 360 for angle in column])
+                new_data.append([(angle + (-np.pi)) / (2 * np.pi) for angle in column])
 
             # Track edges 0 --> 200 meters
             if i > 5:

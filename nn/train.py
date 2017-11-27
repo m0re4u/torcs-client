@@ -93,30 +93,9 @@ class FiveLayerNet(torch.nn.Module):
 
 
 def main(train_file, cuda_enabled, params):
-    if not os.path.isfile("../csv_data/out.csv"):
-        print("out.csv not found")
-        if train_file == "":
-            mypath = "../csv_data"
-            train_files = [mypath + "/" + f for f in listdir(mypath) if
-                           not f.endswith("out.csv") and f.endswith(".csv")]
-        else:
-            train_files = [train_file]
-
-        print(train_files)
-
-        print("Start creating the data csv file")
-        fout = open("../csv_data/out.csv", "a")
-        for file in train_files:
-            for line in open(file):
-                fout.write(line)
-        fout.close()
-
-
-    print("Data csv prepared for loading")
-    print("Convert csv to data")
-
-    data = ds.DriverDataset("../csv_data/out.csv")
-    train_loader = DataLoader(data, batch_size=params["batch"], shuffle=False, num_workers=1)
+    data = ds.DriverDataset(train_file)
+    train_loader = DataLoader(data, batch_size=params[
+                              "batch"], shuffle=False, num_workers=1)
 
     H = params["hidden"]  # number of hidden neurons
     alpha = params["lr"]  # learning rate
@@ -127,12 +106,12 @@ def main(train_file, cuda_enabled, params):
 
     print("Data has size: {}".format(len(data)))
 
-    if params["depth"] == 2:
-        model = TwoLayerNet(D_in, H, D_out)
+    if params["depth"] == 5:
+        model = FiveLayerNet(D_in, H, D_out)
     elif params["depth"] == 3:
         model = ThreeLayerNet(D_in, H, D_out)
     else:
-        model = FiveLayerNet(D_in, H, D_out)
+        model = TwoLayerNet(D_in, H, D_out)
     if cuda_enabled:
         model.cuda()
 
@@ -150,23 +129,22 @@ def main(train_file, cuda_enabled, params):
 
                 # Forward pass
                 y_pred = model(x_batch)
-                # print("---")
-                # print("Prediction: ", y_pred)
-                # print("True: ", y_batch)
-
                 # Compute and print loss
                 loss = criterion(y_pred, y_batch)
 
-                # Zero gradients, perform a backward pass, and update the weights.
+                # Zero gradients, perform a backward pass, and update the
+                # weights.
                 optimizer.zero_grad()
                 loss.backward()
                 optimizer.step()
             print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
     except KeyboardInterrupt:
         print("Save model")
-        torch.save(model.state_dict(), "../models/NNdriver{}-{}.pt".format(params['depth'], H))
+        torch.save(model.state_dict(),
+                   "models/NNdriver{}-{}.pt".format(params['depth'], H))
 
-    torch.save(model.state_dict(), "../models/NNdriver{}-{}.pt".format(params['depth'], H))
+    torch.save(model.state_dict(),
+               "models/NNdriver{}-{}.pt".format(params['depth'], H))
 
 
 if __name__ == '__main__':
