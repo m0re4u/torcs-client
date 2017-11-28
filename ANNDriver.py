@@ -101,9 +101,9 @@ class ANNDriver(Driver):
             if i == 1:
                 new_sensors.append(sensor)
 
-            # Angle to track -pi --> pi radians
+            # Angle to track - 1/2 pi --> 1/2 pi radians
             if i == 2:
-                new_sensors.append((sensor + np.pi) / (2 * np.pi))
+                new_sensors.append((sensor + (0.5 * np.pi)) / np.pi)
 
             # Track edges 0 --> 200 meters 
             if i > 2:
