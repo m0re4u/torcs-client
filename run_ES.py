@@ -152,7 +152,6 @@ class Evolution:
 
         return rewards
 
-
     def compute_rewards(self, parameter_sets):
         reward_vector = np.zeros(self.population_size)
 

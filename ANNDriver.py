@@ -9,7 +9,6 @@ from torch.autograd import Variable
 
 
 class ANNDriver(Driver):
-
     def __init__(self, model_file, H, depth, record_train_file=None):
         super().__init__(False)
 

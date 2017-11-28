@@ -4,13 +4,8 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.nn.functional as F
 
-import numpy as np
 import argparse
-import os
 import pandas as pd
-
-from os import listdir
-from os.path import isfile, join
 
 
 class TwoLayerNet(torch.nn.Module):
@@ -35,23 +30,15 @@ class TwoLayerNet(torch.nn.Module):
         h = F.tanh(h)
         return h
 
+
 class ThreeLayerNet(torch.nn.Module):
     def __init__(self, D_in, H, D_out):
-        """
-        In the constructor we instantiate two nn.Linear modules and assign them as
-        member variables.
-        """
         super(ThreeLayerNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
         self.linear2 = torch.nn.Linear(H, H)
         self.linear3 = torch.nn.Linear(H, D_out)
 
     def forward(self, x):
-        """
-        In the forward function we accept a Variable of input data and we must return
-        a Variable of output data. We can use Modules defined in the constructor as
-        well as arbitrary operators on Variables.
-        """
         h = self.linear1(x)
         h = F.tanh(h)
         h = self.linear2(h)
@@ -60,12 +47,9 @@ class ThreeLayerNet(torch.nn.Module):
         h = F.tanh(h)
         return h
 
+
 class FiveLayerNet(torch.nn.Module):
     def __init__(self, D_in, H, D_out):
-        """
-        In the constructor we instantiate two nn.Linear modules and assign them as
-        member variables.
-        """
         super(FiveLayerNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
         self.linear2 = torch.nn.Linear(H, H)
@@ -74,11 +58,6 @@ class FiveLayerNet(torch.nn.Module):
         self.linear5 = torch.nn.Linear(H, D_out)
 
     def forward(self, x):
-        """
-        In the forward function we accept a Variable of input data and we must return
-        a Variable of output data. We can use Modules defined in the constructor as
-        well as arbitrary operators on Variables.
-        """
         h = self.linear1(x)
         h = F.tanh(h)
         h = self.linear2(h)
@@ -97,9 +76,9 @@ def main(train_file, cuda_enabled, params):
     train_loader = DataLoader(data, batch_size=params[
                               "batch"], shuffle=False, num_workers=1)
 
-    H = params["hidden"]  # number of hidden neurons
-    alpha = params["lr"]  # learning rate
-    epochs = params["epochs"]
+    epochs = params["epochs"]   # number of training epochs
+    H = params["hidden"]        # number of hidden neurons
+    alpha = params["lr"]        # learning rate
 
     D_in = 22  # number of inputs
     D_out = 3  # number of outputs
@@ -112,6 +91,7 @@ def main(train_file, cuda_enabled, params):
         model = ThreeLayerNet(D_in, H, D_out)
     else:
         model = TwoLayerNet(D_in, H, D_out)
+
     if cuda_enabled:
         model.cuda()
 
@@ -154,8 +134,8 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(
         description="")
     parser.add_argument(
-        "-f", "--train_file", help="",
-        default=""
+        "-f", "--train_file", help="CSV file with training data",
+        default="csv_data/aalborg.csv"
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",
@@ -172,10 +152,6 @@ if __name__ == '__main__':
     parser.add_argument(
         "-b", "--batch", help="Set the batch size",
         default="10000", type=int
-    )
-    parser.add_argument(
-        "-m", "--momentum", help="Set the momentum of the SGD",
-        default="0.9", type=float
     )
     parser.add_argument(
         "-d", "--depth", help="Set depth of model",
@@ -195,7 +171,6 @@ if __name__ == '__main__':
         "lr": args.learning_rate,
         "epochs": args.epochs,
         "hidden": args.hidden,
-        "mom": args.momentum,
         "batch": args.batch,
         'depth': args.depth
     }
