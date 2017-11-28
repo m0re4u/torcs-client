@@ -93,19 +93,19 @@ class ANNDriver(Driver):
         new_sensors = []
 
         for i, sensor in enumerate(sensors):
-            # Speed 0 --> 300 km/hour
+            # Speed -100 --> 300 km/hour
             if i == 0:
-                new_sensors.append(sensor / 300)
+                new_sensors.append((sensor + 100) / 400)
 
-            # Distance from centre, already normalized 
+            # Distance from centre -15 --> 15 meters
             if i == 1:
-                new_sensors.append(sensor)
+                new_sensors.append((sensor + 15) / 30)
 
             # Angle to track -pi --> pi radians
             if i == 2:
                 new_sensors.append((sensor + np.pi) / (2 * np.pi))
 
-            # Track edges 0 --> 200 meters 
+            # Track edges 0 --> 200 meters
             if i > 2:
                 new_sensors.append(sensor / 200)
 
