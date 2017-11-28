@@ -27,9 +27,9 @@ class DriverDataset(Dataset):
             if i < 3:
                 new_data.append(column)
 
-            # Speed -400 --> 400 km/hour
+            # Speed 0 --> 300 km/hour
             if i == 3:
-                new_data.append([(speed + (-400)) / 800 for speed in column])
+                new_data.append([(speed / 300) for speed in column])
 
             # Distance from centre, already normalized
             if i == 4:
@@ -37,7 +37,7 @@ class DriverDataset(Dataset):
 
             # Angle to track -pi --> pi radians
             if i == 5:
-                new_data.append([(angle + (-np.pi)) / (2 * np.pi) for angle in column])
+                new_data.append([(angle + np.pi) / (2 * np.pi) for angle in column])
 
             # Track edges 0 --> 200 meters
             if i > 5:
