@@ -121,12 +121,12 @@ def main(train_file, cuda_enabled, params):
     except KeyboardInterrupt:
         # Save file on KeyboardInterrupt
         filename = "models/NNdriver{}-{}.pt".format(params['depth'], H)
-        print("Saved model to {}".format)
+        print("Saved model to {}".format(filename))
         torch.save(model.state_dict(), filename)
 
     # Save model after training
     filename = "models/NNdriver{}-{}.pt".format(params['depth'], H)
-    print("Saved model to {}".format)
+    print("Saved model to {}".format(filename))
     torch.save(model.state_dict(), filename)
 
 
