@@ -72,9 +72,9 @@ class FiveLayerNet(torch.nn.Module):
 
 
 def main(train_file, cuda_enabled, params):
-    data = ds.DriverDataset(train_file)
-    train_loader = DataLoader(data, batch_size=params[
-                              "batch"], shuffle=False, num_workers=1)
+    data = ds.DriverDataset(train_file, normalize=params["norm"])
+    train_loader = DataLoader(
+        data, batch_size=params["batch"], shuffle=False, num_workers=1)
 
     epochs = params["epochs"]   # number of training epochs
     H = params["hidden"]        # number of hidden neurons
@@ -160,6 +160,10 @@ if __name__ == '__main__':
         "-d", "--depth", help="Set depth of model",
         default="2", type=int
     )
+    parser.add_argument(
+        "-n", "--norm", help="Normalize sensor values between 0 and 1",
+        default=False, action='store_true'
+    )
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
     args = parser.parse_args()
@@ -175,6 +179,7 @@ if __name__ == '__main__':
         "epochs": args.epochs,
         "hidden": args.hidden,
         "batch": args.batch,
-        'depth': args.depth
+        "depth": args.depth,
+        "norm": args.norm
     }
     main(args.train_file, cuda_enabled, param_dict)

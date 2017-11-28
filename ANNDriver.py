@@ -9,8 +9,12 @@ from torch.autograd import Variable
 
 
 class ANNDriver(Driver):
-    def __init__(self, model_file, H, depth, record_train_file=None):
+    def __init__(self, model_file, H, depth, record_train_file=None, normalize=False):
         super().__init__(False)
+        if normalize:
+            self.norm = True
+        else:
+            self.norm = False
 
         # Select right model
         if depth == 3:
@@ -46,17 +50,18 @@ class ANNDriver(Driver):
         sensors = [carstate.speed_x, carstate.distance_from_center,
                    carstate.angle, *(carstate.distances_from_edge)]
 
-        # Sensor normalization -> values between 0 and 1
-        sensors = self.normalize_sensors(sensors)
+        if self.norm:
+            # Sensor normalization -> values between 0 and 1
+            sensors = self.normalize_sensors(sensors)
 
         # Forward pass our model
         y = self.model(Variable(torch.Tensor(sensors)))
 
         # Create command from model output
         command = Command()
-        command.accelerator = y.data[0][0]
-        command.brake = y.data[0][1]
-        command.steering = y.data[0][2]
+        command.accelerator = y.data[0]
+        command.brake = y.data[1]
+        command.steering = y.data[2]
 
         print("Accelerate: {}".format(command.accelerator))
         print("Brake:      {}".format(command.brake))
@@ -104,4 +109,4 @@ class ANNDriver(Driver):
             if i > 2:
                 new_sensors.append(sensor / 200)
 
-        return [new_sensors]
+        return new_sensors

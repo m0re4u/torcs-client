@@ -24,6 +24,10 @@ if __name__ == '__main__':
         default="2", type=int
     )
     parser.add_argument(
+        "-n", "--norm", help="Normalize sensor values between 0 and 1",
+        default=False, action='store_true'
+    )
+    parser.add_argument(
         "-r", "--record", help="The path to a file that will contain recorded \
         actuator & sensor data",
         default=None
@@ -61,8 +65,10 @@ if __name__ == '__main__':
     )
 
     # Init client
-    client = Client(driver=ANNDriver(args.model_file,
-                                     args.hidden, args.depth, args.record), port=args.port)
+    client = Client(
+        driver=ANNDriver(
+            args.model_file, args.hidden, args.depth, args.record, args.norm),
+        port=args.port)
 
     try:
         # start client loop:

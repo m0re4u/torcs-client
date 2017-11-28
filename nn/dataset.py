@@ -7,19 +7,21 @@ import pandas as pd
 class DriverDataset(Dataset):
     """Dataset of the training data provided by the CI course"""
 
-    def __init__(self, csv_file, skip_column=None):
+    def __init__(self, csv_file, normalize=False):
         """
         Args:
             csv_file (string): Path to the csv file containing training data.
         """
         df = pd.read_csv(csv_file)
-        if skip_column is not None:
-            # Drop speed column
-            df.drop([skip_column], axis=1, inplace=True)
         # Drop last row
         df.drop(df.tail(1).index, inplace=True)
         self.data = df.as_matrix()
 
+        if normalize:
+            self.normalize()
+
+
+    def normalize(self):
         # Normalize data
         new_data = []
         for i, column in enumerate(self.data.transpose()):
