@@ -32,19 +32,19 @@ class DriverDataset(Dataset):
             if i == 3:
                 new_data.append([((speed + 100) / 400) for speed in column])
 
-            # Distance from centre -15 --> 15 meter
+            # Distance from centre
             if i == 4:
-                new_data.append([((dist + 15) / 30) for dist in column])
+                new_data.append(column)
 
-            # Angle to track -pi --> pi radians
+            # Angle to track
             if i == 5:
-                new_data.append([((angle + np.pi) / (2 * np.pi)) for angle in column])
+                new_data.append(column)
 
             # Track edges 0 --> 200 meters
             if i > 5:
                 new_data.append([distance / 200 for distance in column])
 
-        self.data = np.array(new_data).T
+        self.data = np.array(new_data).transpose()
 
     def __len__(self):
         return len(self.data)

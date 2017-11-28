@@ -51,7 +51,7 @@ class ANNDriver(Driver):
                    carstate.angle, *(carstate.distances_from_edge)]
 
         if self.norm:
-            # Sensor normalization -> values between 0 and 1
+            # Sensor normalization -> ?
             sensors = self.normalize_sensors(sensors)
 
         # Forward pass our model
@@ -59,9 +59,9 @@ class ANNDriver(Driver):
 
         # Create command from model output
         command = Command()
-        command.accelerator = y.data[0]
-        command.brake = y.data[1]
-        command.steering = y.data[2]
+        command.accelerator = np.clip(y.data[0], 0, 1)
+        command.brake = np.clip(y.data[1], 0, 1)
+        command.steering = np.clip(y.data[2], -1, 1)
 
         print("Accelerate: {}".format(command.accelerator))
         print("Brake:      {}".format(command.brake))
@@ -97,13 +97,13 @@ class ANNDriver(Driver):
             if i == 0:
                 new_sensors.append((sensor + 100) / 400)
 
-            # Distance from centre -15 --> 15 meters
+            # Distance from centre -1 --> 1
             if i == 1:
-                new_sensors.append((sensor + 15) / 30)
+                new_sensors.append(sensor)
 
-            # Angle to track -pi --> pi radians
+            # Angle to track -1 --> 1
             if i == 2:
-                new_sensors.append((sensor + np.pi) / (2 * np.pi))
+                new_sensors.append(sensor)
 
             # Track edges 0 --> 200 meters
             if i > 2:
