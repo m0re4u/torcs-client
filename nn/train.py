@@ -120,12 +120,12 @@ def main(train_file, cuda_enabled, params):
             print("Epoch: {:6d} - Loss: {}".format(epoch, loss.data[0]))
     except KeyboardInterrupt:
         # Save file on KeyboardInterrupt
-        filename = "models/NNdriver{}-{}.pt".format(params['depth'], H)
+        filename = "models/NNdriver{}-{}-{}.pt".format(params['depth'], H, epochs)
         print("Saved model to {}".format(filename))
         torch.save(model.state_dict(), filename)
 
     # Save model after training
-    filename = "models/NNdriver{}-{}.pt".format(params['depth'], H)
+    filename = "models/NNdriver{}-{}-{}.pt".format(params['depth'], H, epochs)
     print("Saved model to {}".format(filename))
     torch.save(model.state_dict(), filename)
 
