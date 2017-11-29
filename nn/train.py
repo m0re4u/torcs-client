@@ -162,7 +162,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-n", "--norm", help="Normalize sensor values between 0 and 1",
-        default=True, action='store_true'
+        default=False, action='store_true'
     )
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
