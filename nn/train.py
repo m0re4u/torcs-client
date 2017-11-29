@@ -138,7 +138,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--train_file", help="CSV file with training data",
-        default="csv_data/aalborg.csv"
+        default="csv_data/out.csv"
     )
     parser.add_argument(
         "-lr", "--learning_rate", help="Set the learning rate",
@@ -162,7 +162,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-n", "--norm", help="Normalize sensor values between 0 and 1",
-        default=False, action='store_true'
+        default=True, action='store_true'
     )
     parser.add_argument('--cuda', action='store_true', default=False,
                         help='enables CUDA training')
