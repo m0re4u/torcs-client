@@ -13,6 +13,8 @@ import random
 from copy import deepcopy
 from bs4 import BeautifulSoup
 
+HIDDEN_NEURONS = 100
+
 
 class Evolution:
 
@@ -22,7 +24,7 @@ class Evolution:
         self.modelspath = os.path.join(self.torcspath, "models")
 
         # Init model
-        self.model = nn.train.TwoLayerNet(22, 100, 3)
+        self.model = nn.train.TwoLayerNet(22, HIDDEN_NEURONS, 3)
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
         # Copy the Tensors in the state_dict
@@ -80,7 +82,9 @@ class Evolution:
                 # Driver name
                 section.find('attstr', attrs={'name': 'name'})['val'],
                 # Driver time
-                float(section.find('attnum', attrs={'name': 'time'})['val'])
+                float(section.find('attnum', attrs={'name': 'time'})['val']),
+                # No. of laps completed
+                int(section.find('attnum', attrs={'name': 'laps'})['val'])
             )
             for section in rank_soup.findAll('section')
         ]
@@ -92,8 +96,7 @@ class Evolution:
         cmd = [
             "python3", self.torcspath + "/run.py",
             "-f", (self.modelspath + "/evol_driver{}.pt").format(index),
-            # "-f", "models/NNdriver.pt",
-            "-H", "100",
+            "-H", str(HIDDEN_NEURONS),
             "-p", "{}".format(index + 3001)
         ]
         proc = subprocess.Popen(cmd)
@@ -120,19 +123,19 @@ class Evolution:
     def combine_results(self, results):
 
         rewards = []
-        for rank, driver_index, _, time in results:
+        for rank, driver_index, _, time, laps in results:
             result = 0
 
             # Did not complete all labs at Aalborg track
-            if time < 220:
+            if laps != 3:
                 rewards.append(result)
             else:
                 # Did complete the laps, hence calculate the score
 
                 # Check how many cars in front crashed
                 num_cars_crashed = 0
-                for rank2, driver_index2, _, time2 in results:
-                    if driver_index2 < driver_index and time2 < 220:
+                for rank2, driver_index2, _, time2, laps2 in results:
+                    if driver_index2 < driver_index and laps2 != 3:
                         num_cars_crashed += 1
 
                 # Time component
@@ -248,6 +251,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
     if os.path.isdir(args.race_config):
+        # use folder name to find population size
         folder = os.path.basename(os.path.abspath(args.race_config))
         popsize = int(folder)
     else:
