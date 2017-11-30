@@ -24,7 +24,7 @@ class ANNDriver(Driver):
         elif depth == 5:
             self.model = train.FiveLayerNet(22, H, 3)
         else:
-            print("Using depth=2")
+            # print("Using depth=2")
             self.model = train.TwoLayerNet(22, H, 3)
         # Load model
         self.model.load_state_dict(torch.load(
@@ -68,9 +68,9 @@ class ANNDriver(Driver):
         command.brake = np.clip(brake, 0, 1)
         command.steering = np.clip(steer, -1, 1)
 
-        print("Accelerate: {}".format(command.accelerator))
-        print("Brake:      {}".format(command.brake))
-        print("Steer:      {}".format(command.steering))
+        # print("Accelerate: {}".format(command.accelerator))
+        # print("Brake:      {}".format(command.brake))
+        # print("Steer:      {}".format(command.steering))
 
         # Naive switching of gear
         self.switch_gear(carstate, command)

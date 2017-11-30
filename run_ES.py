@@ -9,6 +9,7 @@ import signal
 import glob
 import logging
 import argparse
+import random
 from copy import deepcopy
 from bs4 import BeautifulSoup
 
@@ -21,7 +22,7 @@ class Evolution:
         self.modelspath = os.path.join(self.torcspath, "models")
 
         # Init model
-        self.model = nn.train.TwoLayerNet(22, 15, 3)
+        self.model = nn.train.TwoLayerNet(22, 100, 3)
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
         # Copy the Tensors in the state_dict
@@ -52,19 +53,19 @@ class Evolution:
 
         return parameter_sets, noise_sets
 
-    def get_results(self):
+    def get_results(self, race):
         result_path = os.path.expanduser("~/.torcs/results")
         out_dir = os.path.join(
             result_path,
             # remove head path and extension
-            '.'.join(os.path.split(self.race_config)[1].split('.')[:-1])
+            '.'.join(os.path.split(race)[1].split('.')[:-1])
         )
         out_base = sorted(os.listdir(out_dir))[-1]
         out_file = os.path.join(
             out_dir,
             out_base
         )
-        print("Reading results from: {}".format(out_file))
+        print("Reading results from: {}".format(out_base))
 
         with open(out_file) as fd:
             soup = BeautifulSoup(fd, 'xml')
@@ -92,31 +93,28 @@ class Evolution:
             "python3", self.torcspath + "/run.py",
             "-f", (self.modelspath + "/evol_driver{}.pt").format(index),
             # "-f", "models/NNdriver.pt",
-            "-H", "15",
+            "-H", "100",
             "-p", "{}".format(index + 3001)
         ]
         proc = subprocess.Popen(cmd)
-        print("Started child {} with PID {} on port {}".format(
-            index, proc.pid, 3001 + index))
         return proc.pid
 
     def run_torcs(self):
         start = time.time()
-        print("Running torcs at {}".format(start))
         if self.headless:
-            cmd = ["torcs -r " + self.race_config]
+            # Pick a random config (random track)
+            race = random.choice(os.listdir(self.race_config))
+            cmd = ["torcs -r " + os.path.join(self.race_config, race)]
         else:
+            race = input("Select race-config (default:\"quickrace\"):")
             cmd = ["torcs"]
+        print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
         res = proc.communicate()
         end = time.time()
-        print("Finished torcs at {}, took {}".format(end, end - start))
-        print("-------")
-        for line in res[0].split("\n"):
-            print("[OUTPUT] {}".format(line))
-        print("-------")
-        results = self.get_results()
+        print("Finished torcs at {:04.3f}, took {:04.3f} seconds".format(end, end - start))
+        results = self.get_results(race)
         return results
 
     def combine_results(self, results):
@@ -226,11 +224,8 @@ if __name__ == '__main__':
         default=10, type=int
     )
     parser.add_argument(
-        "-p", "--population_size", help="Number of drivers for each iteration",
-        default=20, type=int
-    )
-    parser.add_argument(
-        "-s", "--standard_dev", help="",
+        "-s", "--standard_dev", help="Standard deviation for the noise imposed \
+        during training",
         default=1e-06, type=float
     )
     parser.add_argument(
@@ -238,12 +233,13 @@ if __name__ == '__main__':
         default=1e-06, type=float
     )
     parser.add_argument(
-        "-c", "--race_config", help="race configuration file (xml)",
-        default=os.path.dirname(filepath) + "/race-config/training.xml"
+        "-c", "--race_config", help="Race configuration file (xml) directory. \
+        This will also choose the right population size (name of subdirectory)",
+        default=os.path.dirname(filepath) + "/race-config/headless/2/"
     )
     parser.add_argument(
-        "-m", "--init_model", help="initial model (xml)",
-        default=os.path.dirname(filepath) + "/models/NNdriver.pt"
+        "-m", "--init_model", help="initial model (for pytorch)",
+        default=os.path.dirname(filepath) + "/models/NNdriver2-100-300.pt"
     )
     parser.add_argument(
         "--no-headless", help="Run with graphical output",
@@ -251,17 +247,24 @@ if __name__ == '__main__':
     )
 
     args = parser.parse_args()
+    if os.path.isdir(args.race_config):
+        folder = os.path.basename(os.path.abspath(args.race_config))
+        popsize = int(folder)
+    else:
+        exit("Error determining population size! \
+        {} might not be a valid config folder".format(args.race_config))
+
     # Parameters used in the ES algorithm
     ES_params = {
         'iterations': args.iterations,
-        'population_size': args.population_size,
+        'population_size': popsize,
         'standard_dev': args.standard_dev,
         'learning_rate': args.learning_rate
     }
-
     # Parameters used in running torcs and the clients
     exec_params = {
         'race_config': args.race_config,
         'headless': not args.no_headless
     }
+
     main(args.init_model, exec_params, ES_params)
