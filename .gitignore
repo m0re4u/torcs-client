@@ -6,5 +6,3 @@ logs/
 .idea
 *.pyc
 
-# Ignore pytorch models
-*.pt

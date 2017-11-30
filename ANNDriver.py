@@ -16,6 +16,8 @@ class ANNDriver(Driver):
         else:
             self.norm = False
 
+        self.time = 0
+
         # Select right model
         if depth == 3:
             self.model = train.ThreeLayerNet(22, H, 3)
@@ -52,16 +54,19 @@ class ANNDriver(Driver):
 
         if self.norm:
             # Sensor normalization -> ?
+            print("NORMALIZE!!!!")
             sensors = self.normalize_sensors(sensors)
 
         # Forward pass our model
         y = self.model(Variable(torch.Tensor(sensors)))
 
+        accelerate, brake, steer = self.smooth_commands(y.data)
+
         # Create command from model output
         command = Command()
-        command.accelerator = np.clip(y.data[0], 0, 1)
-        command.brake = np.clip(y.data[1], 0, 1)
-        command.steering = np.clip(y.data[2], -1, 1)
+        command.accelerator = np.clip(accelerate, 0, 1)
+        command.brake = np.clip(brake, 0, 1)
+        command.steering = np.clip(steer, -1, 1)
 
         print("Accelerate: {}".format(command.accelerator))
         print("Brake:      {}".format(command.brake))
@@ -79,12 +84,29 @@ class ANNDriver(Driver):
         """
         Naive switching of gears
         """
-        if carstate.rpm > 8000:
+        if carstate.rpm > 8500:
             command.gear = carstate.gear + 1
         elif carstate.rpm < 2500:
             command.gear = carstate.gear - 1
         if not command.gear:
             command.gear = carstate.gear or 1
+
+    def smooth_commands(self, data):
+        accelerate = data[0]
+        brake = data[1]
+        steer = data[2]
+
+        if accelerate > 0.85 and self.time < 1000:
+            accelerate = 1.0
+            brake = 0.0
+
+        if accelerate > 0.98 and brake < 0.1:
+            accelerate = 1.0
+            brake = 0.0
+
+        self.time += 1
+
+        return accelerate, brake, steer
 
     def normalize_sensors(self, sensors):
         """

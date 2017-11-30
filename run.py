@@ -13,11 +13,11 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-f", "--model_file", help="The path to the trained driver model",
-        default=os.path.dirname(filepath) + "/models/NNdriver2-10.pt"
+        default=os.path.dirname(filepath) + "/models/NNdriver2-100-300.pt"
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",
-        default="10", type=int
+        default="100", type=int
     )
     parser.add_argument(
         "-d", "--depth", help="Set the number of layers",
