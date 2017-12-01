@@ -107,10 +107,10 @@ class Evolution:
         if self.headless:
             # Pick a random config (random track)
             race = random.choice(os.listdir(self.race_config))
-            cmd = ["torcs -r " + os.path.join(self.race_config, race)]
+            cmd = ["/home/jadegeest/torcs/bin/torcs -r " + os.path.join(self.race_config, race)]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
-            cmd = ["torcs"]
+            cmd = ["/home/jadegeest/torcs/bin/torcs"]
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
