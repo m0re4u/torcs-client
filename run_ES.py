@@ -92,10 +92,10 @@ class Evolution:
 
     def init_drivers(self, index, params):
         # Save current parameter set for the client to read in
-        torch.save(params, "models/evol_driver{}-{}-{}.pt".format(self.standard_dev, self.learning_rate, index))
+        torch.save(params, "models/temp_models/evol_driver{}-{}-{}.pt".format(self.standard_dev, self.learning_rate, index))
         cmd = [
             "python3", self.torcspath + "/run.py",
-            "-f", (self.modelspath + "/evol_driver{}-{}-{}.pt").format(self.standard_dev, self.learning_rate, index),
+            "-f", ("models/temp_models/evol_driver{}-{}-{}.pt").format(self.standard_dev, self.learning_rate, index),
             "-H", str(HIDDEN_NEURONS),
             "-p", "{}".format(index + 3001)
         ]
@@ -107,10 +107,10 @@ class Evolution:
         if self.headless:
             # Pick a random config (random track)
             race = random.choice(os.listdir(self.race_config))
-            cmd = ["/home/jadegeest/torcs/bin/torcs -r " + os.path.join(self.race_config, race)]
+            cmd = ["torcs -r " + os.path.join(self.race_config, race)]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
-            cmd = ["/home/jadegeest/torcs/bin/torcs"]
+            cmd = ["torcs"]
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
@@ -157,7 +157,7 @@ class Evolution:
         reward_vector = np.zeros(self.population_size)
 
         # Remove old drivers:
-        for filename in glob.glob("models/evol_driver{}-{}*".format(self.standard_dev, self.learning_rate)):
+        for filename in glob.glob("models/temp_models/evol_driver{}-{}*".format(self.standard_dev, self.learning_rate)):
             os.remove(filename)
 
         # Start drivers
