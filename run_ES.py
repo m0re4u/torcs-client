@@ -92,10 +92,10 @@ class Evolution:
 
     def init_drivers(self, index, params):
         # Save current parameter set for the client to read in
-        torch.save(params, "models/evol_driver{}.pt".format(index))
+        torch.save(params, "models/evol_driver{}-{}-{}.pt".format(self.standard_dev, self.learning_rate, index))
         cmd = [
             "python3", self.torcspath + "/run.py",
-            "-f", (self.modelspath + "/evol_driver{}.pt").format(index),
+            "-f", (self.modelspath + "/evol_driver{}-{}-{}.pt").format(self.standard_dev, self.learning_rate, index),
             "-H", str(HIDDEN_NEURONS),
             "-p", "{}".format(index + 3001)
         ]
@@ -157,7 +157,7 @@ class Evolution:
         reward_vector = np.zeros(self.population_size)
 
         # Remove old drivers:
-        for filename in glob.glob("models/evol_driver*"):
+        for filename in glob.glob("models/evol_driver{}-{}*".format(self.standard_dev, self.learning_rate)):
             os.remove(filename)
 
         # Start drivers
@@ -208,7 +208,7 @@ class Evolution:
             reward_vector = self.compute_rewards(parameter_sets)
             # Update parameters using the noised parameters and the race outcome
             self.update_parameters(reward_vector, noise_sets)
-            torch.save(self.parameters, "models/output_gen_end.pt")
+            torch.save(self.parameters, "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
 
 
 def main(model_file, exec_params, es_params):
@@ -224,7 +224,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-i", "--iterations", help="Number of iterations for the ES algorithm",
-        default=10, type=int
+        default=500, type=int
     )
     parser.add_argument(
         "-s", "--standard_dev", help="Standard deviation for the noise imposed \
@@ -238,7 +238,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "-c", "--race_config", help="Race configuration file (xml) directory. \
         This will also choose the right population size (name of subdirectory)",
-        default=os.path.dirname(filepath) + "/race-config/headless/2/"
+        default=os.path.dirname(filepath) + "/race-config/headless/16/"
     )
     parser.add_argument(
         "-m", "--init_model", help="initial model (for pytorch)",

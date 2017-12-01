@@ -24,7 +24,6 @@ class ANNDriver(Driver):
         elif depth == 5:
             self.model = train.FiveLayerNet(22, H, 3)
         else:
-            # print("Using depth=2")
             self.model = train.TwoLayerNet(22, H, 3)
         # Load model
         self.model.load_state_dict(torch.load(
