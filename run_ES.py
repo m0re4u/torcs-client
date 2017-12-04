@@ -37,6 +37,8 @@ class Evolution:
         self.standard_dev = es_params['standard_dev']
         self.learning_rate = es_params['learning_rate']
 
+        self.server = exec_params["server"]
+
         self.race = ""
         self.i = 0
 
@@ -110,10 +112,16 @@ class Evolution:
             race_list.sort()
             race = race_list[self.i % len(race_list)]
             self.race = race
-            cmd = ["torcs -r " + os.path.join(self.race_config, race)]
+            if not self.server:
+                cmd = ["torcs -r " + os.path.join(self.race_config, race)]
+            else:
+                cmd = ["/home/jadegeest/torcs/bin/torcs -r " + os.path.join(self.race_config, race)]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
-            cmd = ["torcs"]
+            if not server:
+                cmd = ["torcs"]
+            else:
+                cmd = ["/home/jadegeest/torcs/bin/torcs"]
         start = time.time()
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
@@ -297,6 +305,9 @@ if __name__ == '__main__':
         "--no-headless", help="Run with graphical output",
         action="store_true"
     )
+    parser.add_argument(
+       "-server", "--server", default=False
+    )
 
     args = parser.parse_args()
     if os.path.isdir(args.race_config):
@@ -317,7 +328,8 @@ if __name__ == '__main__':
     # Parameters used in running torcs and the clients
     exec_params = {
         'race_config': args.race_config,
-        'headless': not args.no_headless
+        'headless': not args.no_headless,
+        'server': args.server
     }
 
     main(args.init_model, exec_params, ES_params)
