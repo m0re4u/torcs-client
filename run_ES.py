@@ -38,6 +38,7 @@ class Evolution:
         self.learning_rate = es_params['learning_rate']
 
         self.server = exec_params["server"]
+        self.limit = exec_params["limit"]
 
         self.race = ""
         self.i = 0
@@ -140,45 +141,45 @@ class Evolution:
             # Did not complete all labs at Aalborg track
             if laps != 3:
                 rewards.append(result)
-            elif "aalborg" in self.race and time > 291:
+            elif "aalborg" in self.race and time > 291 and self.limit:
                 rewards.append(result)
-            elif "alpine1" in self.race and time > 543:
+            elif "alpine1" in self.race and time > 543 and self.limit:
                 rewards.append(result)
-            elif "alpine2" in self.race and time > 353:
+            elif "alpine2" in self.race and time > 353 and self.limit:
                 rewards.append(result)
-            elif "brondehach" in self.race and time > 297:
+            elif "brondehach" in self.race and time > 297 and self.limit:
                 rewards.append(result)
-            elif "corkscrew" in self.race and time > 317:
+            elif "corkscrew" in self.race and time > 317 and self.limit:
                 rewards.append(result)
-            elif "dirt1" in self.race and time > 122:
+            elif "dirt1" in self.race and time > 122 and self.limit:
                 rewards.append(result)
-            elif "dirt3" in self.race and time > 218:
+            elif "dirt3" in self.race and time > 218 and self.limit:
                 rewards.append(result)
-            elif "etrack2" in self.race and time > 448:
+            elif "etrack2" in self.race and time > 448 and self.limit:
                 rewards.append(result)
-            elif "etrack3" in self.race and time > 385:
+            elif "etrack3" in self.race and time > 385 and self.limit:
                 rewards.append(result)
-            elif "etrack4" in self.race and time > 423:
+            elif "etrack4" in self.race and time > 423 and self.limit:
                 rewards.append(result)
-            elif "etrack6" in self.race and time > 355:
+            elif "etrack6" in self.race and time > 355 and self.limit:
                 rewards.append(result)
-            elif "forza" in self.race and time > 390:
+            elif "forza" in self.race and time > 390 and self.limit:
                 rewards.append(result)
-            elif "gtrack1" in self.race and time > 149:
+            elif "gtrack1" in self.race and time > 149 and self.limit:
                 rewards.append(result)
-            elif "gtrack3" in self.race and time > 275:
+            elif "gtrack3" in self.race and time > 275 and self.limit:
                 rewards.append(result)
-            elif "mixed1" in self.race and time > 154:
+            elif "mixed1" in self.race and time > 154 and self.limit:
                 rewards.append(result)
-            elif "ruudskogen" in self.race and time > 270:
+            elif "ruudskogen" in self.race and time > 270 and self.limit:
                 rewards.append(result)
-            elif "spring" in self.race and time > 1740:
+            elif "spring" in self.race and time > 1740 and self.limit:
                 rewards.append(result)
-            elif "street1" in self.race and time > 310:
+            elif "street1" in self.race and time > 310 and self.limit:
                 rewards.append(result)
-            elif "wheel1" in self.race and time > 330:
+            elif "wheel1" in self.race and time > 330 and self.limit:
                 rewards.append(result)
-            elif "wheel2" in self.race and time > 450:
+            elif "wheel2" in self.race and time > 450 and self.limit:
                 rewards.append(result)
             else:
                 # Did complete the laps, hence calculate the score
@@ -308,6 +309,9 @@ if __name__ == '__main__':
     parser.add_argument(
        "-server", "--server", default=False
     )
+    parser.add_argument(
+        "-limit", "--limit", default=False
+    )
 
     args = parser.parse_args()
     if os.path.isdir(args.race_config):
@@ -329,7 +333,8 @@ if __name__ == '__main__':
     exec_params = {
         'race_config': args.race_config,
         'headless': not args.no_headless,
-        'server': args.server
+        'server': args.server,
+        'limit': args.limit
     }
 
     main(args.init_model, exec_params, ES_params)
