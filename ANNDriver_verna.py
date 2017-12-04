@@ -145,7 +145,7 @@ class ANNDriver(Driver):
         command.accelerator = 0.4
 
         self.recovers += 1
-        if (dist < 0.1 and self.recovers > 25) or self.recovers > 50:
+        if (dist < 0.1 and self.recovers > 35) or self.recovers > 50:
             self.recovers = 0
         else:
             self.recover_mode = True
@@ -228,19 +228,8 @@ class StupidDriver(Driver):
             else:
                 command.steering = command.steering + 1
 
-
-
         self.last_command = command
         return command
-
-    def calculate_steering(self, distances):
-        x = 3
-        dangers = sorted(distances)[:x]
-        steering = 0
-        for danger in dangers:
-            index = distances.index(danger)
-            steering += (2*(index - (len(distances)/2))) / len(distances)
-        return steering / x
 
     def switch_gear(self, carstate, command):
         """
