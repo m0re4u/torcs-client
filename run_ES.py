@@ -38,6 +38,7 @@ class Evolution:
         self.learning_rate = es_params['learning_rate']
 
         self.race = ""
+        self.i = 0
 
     def noise_models(self):
         model_sets = []
@@ -105,7 +106,9 @@ class Evolution:
     def run_torcs(self):
         if self.headless:
             # Pick a random config (random track)
-            race = random.choice(os.listdir(self.race_config))
+            race_list = os.listdir(self.race_config)
+            race_list.sort()
+            race = race_list[self.i % len(race_list)]
             self.race = race
             cmd = ["torcs -r " + os.path.join(self.race_config, race)]
         else:
@@ -114,7 +117,10 @@ class Evolution:
         start = time.time()
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+        cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+
+        self.i += 1
+
         return proc, race, start
 
     def combine_results(self, results):
@@ -216,6 +222,10 @@ class Evolution:
         print("Race results:\n {}".format("\n ".join(str(r) for r in results)))
 
         reward_vector = self.combine_results(results)
+
+        if sum(reward_vector) == 0:
+            self.i -= 1
+
         print("Rewards:\n {}".format(reward_vector))
         return reward_vector
 
