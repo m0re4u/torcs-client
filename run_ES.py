@@ -37,6 +37,8 @@ class Evolution:
         self.standard_dev = es_params['standard_dev']
         self.learning_rate = es_params['learning_rate']
 
+        self.race = ""
+
     def noise_models(self):
         model_sets = []
         noise_sets = []
@@ -104,6 +106,7 @@ class Evolution:
         if self.headless:
             # Pick a random config (random track)
             race = random.choice(os.listdir(self.race_config))
+            self.race = race
             cmd = ["torcs -r " + os.path.join(self.race_config, race)]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
@@ -122,6 +125,46 @@ class Evolution:
 
             # Did not complete all labs at Aalborg track
             if laps != 3:
+                rewards.append(result)
+            elif "aalborg" in self.race and time > 291:
+                rewards.append(result)
+            elif "alpine1" in self.race and time > 543:
+                rewards.append(result)
+            elif "alpine2" in self.race and time > 353:
+                rewards.append(result)
+            elif "brondehach" in self.race and time > 297:
+                rewards.append(result)
+            elif "corkscrew" in self.race and time > 317:
+                rewards.append(result)
+            elif "dirt1" in self.race and time > 122:
+                rewards.append(result)
+            elif "dirt3" in self.race and time > 218:
+                rewards.append(result)
+            elif "etrack2" in self.race and time > 448:
+                rewards.append(result)
+            elif "etrack3" in self.race and time > 385:
+                rewards.append(result)
+            elif "etrack4" in self.race and time > 423:
+                rewards.append(result)
+            elif "etrack6" in self.race and time > 355:
+                rewards.append(result)
+            elif "forza" in self.race and time > 390:
+                rewards.append(result)
+            elif "gtrack1" in self.race and time > 149:
+                rewards.append(result)
+            elif "gtrack3" in self.race and time > 275:
+                rewards.append(result)
+            elif "mixed1" in self.race and time > 154:
+                rewards.append(result)
+            elif "ruudskogen" in self.race and time > 270:
+                rewards.append(result)
+            elif "spring" in self.race and time > 1740:
+                rewards.append(result)
+            elif "street1" in self.race and time > 310:
+                rewards.append(result)
+            elif "wheel1" in self.race and time > 330:
+                rewards.append(result)
+            elif "wheel2" in self.race and time > 450:
                 rewards.append(result)
             else:
                 # Did complete the laps, hence calculate the score
@@ -193,9 +236,7 @@ class Evolution:
                 gradient[j] += update
 
         for i, parameter in enumerate(self.model.parameters()):
-            # print(parameter.data)
             parameter.data += self.learning_rate * gradient[i]
-            # print(parameter.data)
 
     def run(self):
         for i in range(self.iterations):
