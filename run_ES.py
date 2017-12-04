@@ -101,7 +101,6 @@ class Evolution:
         return proc.pid
 
     def run_torcs(self):
-        start = time.time()
         if self.headless:
             # Pick a random config (random track)
             race = random.choice(os.listdir(self.race_config))
@@ -109,14 +108,11 @@ class Evolution:
         else:
             race = input("Select race-config (default:\"quickrace\"):")
             cmd = ["torcs"]
+        start = time.time()
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
-        res = proc.communicate()
-        end = time.time()
-        print("Finished torcs at {:04.3f}, took {:04.3f} seconds".format(end, end - start))
-        results = self.get_results(race)
-        return results
+        return proc, race, start
 
     def combine_results(self, results):
 
@@ -160,18 +156,20 @@ class Evolution:
 
         # Start drivers
         procs = []
-        try:
-            for i, model in enumerate(model_sets):
-                proc = self.init_drivers(i, model.state_dict())
-                procs.append(proc)
+        for i, model in enumerate(model_sets):
+            proc = self.init_drivers(i, model.state_dict())
+            procs.append(proc)
 
-            # Start torcs and wait for it to finish
-            results = self.run_torcs()
-        except Exception as e:
-            print("Error: {}".format(e))
-            for proc in procs:
-                os.killpg(os.getpgid(proc), signal.SIGTERM)
+        # Start torcs and wait for it to finish
+        torcs_proc, race, start = self.run_torcs()
+        print(procs, torcs_proc.pid)
+        res = torcs_proc.communicate()
 
+        end = time.time()
+        print("Finished torcs at {:04.3f}, took {:04.3f} seconds".format(
+              end, end - start))
+
+        results = self.get_results(race)
         print("Race results:\n {}".format("\n ".join(str(r) for r in results)))
 
         reward_vector = self.combine_results(results)
@@ -194,12 +192,10 @@ class Evolution:
 
                 gradient[j] += update
 
-
         for i, parameter in enumerate(self.model.parameters()):
-            print(parameter.data)
+            # print(parameter.data)
             parameter.data += self.learning_rate * gradient[i]
-            print(parameter.data)
-
+            # print(parameter.data)
 
     def run(self):
         for i in range(self.iterations):
@@ -240,7 +236,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "-c", "--race_config", help="Race configuration file (xml) directory. \
         This will also choose the right population size (name of subdirectory)",
-        default=os.path.dirname(filepath) + "/race-config/headless/2/"
+        default=os.path.dirname(filepath) + "/race-config/headless/10/"
     )
     parser.add_argument(
         "-m", "--init_model", help="initial model (for pytorch)",
