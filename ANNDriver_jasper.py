@@ -8,10 +8,12 @@ from pytocl.driver import Driver
 from nn import train
 import random
 from torch.autograd import Variable
+import pickle
+import os.path
 
 
-class ANNDriverVerna(Driver):
-    def __init__(self, model_file, H, depth, record_train_file=None, normalize=False):
+class ANNDriverJasper(Driver):
+    def __init__(self, model_file, H, depth, port, record_train_file=None, normalize=False):
         super().__init__(False)
         if normalize:
             self.norm = True
@@ -49,7 +51,21 @@ class ANNDriverVerna(Driver):
         self.recovers = 0
         self.recover_mode = False
         self.speeds = []
-        self.number = 1
+
+        self.dict = {}
+        self.dict["crashes"] = []
+        self.crash_recorded = False
+        self.dict_teammate = {}
+        self.port = port
+        self.partner = -1
+
+        path = os.path.abspath(os.path.dirname(__file__))
+        for i in os.listdir(path):
+            if os.path.isfile(os.path.join(path, i)) and 'mjv_partner' in i:
+                try:
+                    os.remove(path + "/" + i)
+                except:
+                    pass
 
     def __del__(self):
         if self.record:
@@ -57,24 +73,35 @@ class ANNDriverVerna(Driver):
             self.file_handler = None
 
     def drive(self, carstate: State) -> Command:
-        if not self.race_started and carstate.distance_from_start < 3:
-            self.race_started = True
+        # print("POSITION", carstate.race_position)
+        if carstate.distance_raced < 3:
             try:
-                position_team = int(open("mjv_partner1.txt", 'r').read())
-                open("mjv_partner2.txt", 'w').write(str(carstate.race_position))
-                self.number = 2
-                self.partner = 1
+                self.dict["position"] = carstate.race_position
+                with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
+                    pickle.dump(self.dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
             except:
-                open("mjv_partner1.txt", "w").write(str(carstate.race_position))
-                self.number = 1
-                self.partner = 2
-        elif self.race_started:
-            position_other = int(open("mjv_partner{}.txt".format(self.partner), 'r').read())
-            open("mjv_partner{}.txt".format(self.number), "w").write(str(carstate.race_position))
-            if carstate.race_position > position_other:
-                self.leader = False
-            else:
-                self.leader = True
+                pass
+            path = os.path.abspath(os.path.dirname(__file__))
+            for i in os.listdir(path):
+                if os.path.isfile(os.path.join(path, i)) and 'mjv_partner' in i and not str(self.port) in i:
+                    self.partner = i.strip('mjv_partner').strip('.txt')
+        else:
+            try:
+                with open("mjv_partner{}.txt".format(self.partner), 'rb') as handle:
+                    self.dict_teammate = pickle.load(handle)
+                print("FILE", self.dict_teammate)
+                self.dict["position"] = carstate.race_position
+                with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
+                    pickle.dump(self.dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                if carstate.race_position > int(self.dict_teammate["position"]):
+                    self.leader = False
+                else:
+                    self.leader = True
+            except:
+                pass
+
+            # print(self.dict_teammate)
+
 
         # print("Distance: {}".format(carstate.distance_from_start))
         # Select the sensors we need for our model
@@ -90,6 +117,11 @@ class ANNDriverVerna(Driver):
         standing_still = self.recovers == 0 and all(abs(s) < 1.0 for s in self.speeds[-5:])
         if self.race_started and (off_road or self.recovers > 0):
             command = self.recover(carstate, command)
+
+            if not self.crash_recorded:
+                self.crash_recorded = True
+            else:
+                self.crash_recorded = False
         # NOT CRASHED
         else:
             if carstate.gear == -1:
@@ -106,7 +138,7 @@ class ANNDriverVerna(Driver):
             command.brake = np.clip(y.data[1], 0, 1)
             command.steering = np.clip(y.data[2], -1, 1)
 
-            if self.race_started and self.is_leader and carstate.distance_from_start > 50: # TODO include not leader
+            if self.race_started and not self.is_leader and carstate.distance_from_start > 50:
                 command = self.helper.drive(command, distances, carstate)
 
             # Naive switching of gear
@@ -207,31 +239,28 @@ class StupidDriver(Driver):
         return command
 
     def next_move(self, carstate, command, distances):
-        if command.brake < 0.9:
-            if carstate.speed_x > 60:
-                command.brake = 1
-                command.accelerator = 0.0
-            else:
-                command.brake = 0
-                command.accelerator = 1.0
-            if min(distances) < 4:
-                if not self.steering_switched:
-                    self.steering_switched = True
-                    if self.steering_sign == -1:
-                        self.steering_sign = 1
-                    else:
-                        self.steering_sign = -1
-
-                command.steering = 0.7 * self.steering_sign
-            elif abs(carstate.angle) < 0.1:
-                command.steering = 0.1 * self.steering_sign
-                self.steering_switched = False
-            else:
-                self.steering_switched = False
-                command.steering = 0
-            print("STEER", command.steering)
-            print("ANGLE", carstate.angle)
-            print("Distance MIN", min(distances))
+        # if command.brake < 0.9:
+        #     if carstate.speed_x > 60:
+        #         command.brake = 1
+        #         command.accelerator = 0.0
+        #     else:
+        #         command.brake = 0
+        #         command.accelerator = 1.0
+        #     if min(distances) < 4:
+        #         if not self.steering_switched:
+        #             self.steering_switched = True
+        #             if self.steering_sign == -1:
+        #                 self.steering_sign = 1
+        #             else:
+        #                 self.steering_sign = -1
+        #
+        #         command.steering = 0.7 * self.steering_sign
+        #     elif abs(carstate.angle) < 0.1:
+        #         command.steering = 0.1 * self.steering_sign
+        #         self.steering_switched = False
+        #     else:
+        #         self.steering_switched = False
+        #         command.steering = 0
 
         return command
 

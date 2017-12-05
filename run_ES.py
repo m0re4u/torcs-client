@@ -296,7 +296,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "-c", "--race_config", help="Race configuration file (xml) directory. \
         This will also choose the right population size (name of subdirectory)",
-        default=os.path.dirname(filepath) + "/race-config/headless/10/"
+        default=os.path.dirname(filepath) + "/race-config/headless/2/"
     )
     parser.add_argument(
         "-m", "--init_model", help="initial model (for pytorch)",
