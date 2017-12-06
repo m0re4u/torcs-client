@@ -73,7 +73,6 @@ class ANNDriverJasper(Driver):
             self.file_handler = None
 
     def drive(self, carstate: State) -> Command:
-        # print("POSITION", carstate.race_position)
         if carstate.distance_raced < 3:
             try:
                 self.dict["position"] = carstate.race_position
@@ -86,22 +85,27 @@ class ANNDriverJasper(Driver):
                 if os.path.isfile(os.path.join(path, i)) and 'mjv_partner' in i and not str(self.port) in i:
                     self.partner = i.strip('mjv_partner').strip('.txt')
         else:
+            self.race_started = True
+
             try:
                 with open("mjv_partner{}.txt".format(self.partner), 'rb') as handle:
                     self.dict_teammate = pickle.load(handle)
-                print("FILE", self.dict_teammate)
+
                 self.dict["position"] = carstate.race_position
                 with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
                     pickle.dump(self.dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                # print(self.port, self.dict_teammate["position"])
+                # print("RESULT", carstate.race_position > int(self.dict_teammate["position"]))
                 if carstate.race_position > int(self.dict_teammate["position"]):
-                    self.leader = False
+                    self.is_leader = False
                 else:
-                    self.leader = True
+                    self.is_leader = True
             except:
+                print("Not able to read port", self.port)
                 pass
 
             # print(self.dict_teammate)
-
+            # print(self.port, self.leader)
 
         # print("Distance: {}".format(carstate.distance_from_start))
         # Select the sensors we need for our model
@@ -114,16 +118,19 @@ class ANNDriverJasper(Driver):
                    carstate.angle, *(carstate.distances_from_edge)]
         # CRASHED
         off_road = all(distance == -1.0 for distance in distances)
+
         standing_still = self.recovers == 0 and all(abs(s) < 1.0 for s in self.speeds[-5:])
         if self.race_started and (off_road or self.recovers > 0):
             command = self.recover(carstate, command)
 
             if not self.crash_recorded:
                 self.crash_recorded = True
-            else:
-                self.crash_recorded = False
+                self.dict["crashes"].append(carstate.distance_raced)
+
         # NOT CRASHED
         else:
+            self.crash_recorded = False
+
             if carstate.gear == -1:
                 carstate.gear = 2
             if self.norm:
@@ -138,8 +145,10 @@ class ANNDriverJasper(Driver):
             command.brake = np.clip(y.data[1], 0, 1)
             command.steering = np.clip(y.data[2], -1, 1)
 
+            # print(self.race_started and not self.is_leader)
+            # print("LEADER", self.is_leader)
             if self.race_started and not self.is_leader and carstate.distance_from_start > 50:
-                command = self.helper.drive(command, distances, carstate)
+                command = self.check_swarm(command, carstate)
 
             # Naive switching of gear
             self.switch_gear(carstate, command)
@@ -151,6 +160,14 @@ class ANNDriverJasper(Driver):
         if self.record is True:
             sensor_string = ",".join([str(x) for x in sensors]) + "\n"
             self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
+        return command
+
+    def check_swarm(self, command, carstate):
+        for crash in self.dict_teammate["crashes"]:
+            if crash - 100 < carstate.distance_raced < crash - 30:
+                if command.accelerator > 0.9:
+                    command.accelerator = 0.5
+
         return command
 
     def recover(self, carstate, command):
