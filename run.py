@@ -2,6 +2,7 @@
 
 from pytocl.protocol import Client
 from ANNDriver import ANNDriver
+from ANNDriver_jasper import ANNDriverJasper
 import argparse
 import logging
 import os
@@ -26,6 +27,10 @@ if __name__ == '__main__':
     parser.add_argument(
         "-n", "--norm", help="Normalize sensor values between 0 and 1",
         default=False, action='store_true'
+    )
+    parser.add_argument(
+        "-dump", "--dump",
+        default=False, type=bool
     )
     parser.add_argument(
         "-r", "--record", help="The path to a file that will contain recorded \
@@ -65,10 +70,18 @@ if __name__ == '__main__':
     )
 
     # Init client
-    client = Client(
-        driver=ANNDriver(
-            args.model_file, args.hidden, args.depth, args.record, args.norm),
-        port=args.port)
+    if not args.dump:
+        print("Run dump")
+        client = Client(
+            driver=ANNDriverJasper(
+                args.model_file, args.hidden, args.depth, args.port, args.record, args.norm),
+            port=args.port)
+    else:
+        print("Run normally")
+        client = Client(
+            driver=ANNDriver(
+                args.model_file, args.hidden, args.depth, args.record, args.norm),
+            port=args.port)
 
     try:
         # start client loop:
