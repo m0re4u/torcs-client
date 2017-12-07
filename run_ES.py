@@ -141,28 +141,28 @@ class Evolution:
             # Did not complete all labs at Aalborg track
             if laps != 3:
                 rewards.append(result)
-            elif "aalborg" in self.race and time > 291 and self.limit:
-                rewards.append(result)
-            elif "alpine1" in self.race and time > 543 and self.limit:
-                rewards.append(result)
-            elif "alpine2" in self.race and time > 353 and self.limit:
-                rewards.append(result)
-            elif "brondehach" in self.race and time > 297 and self.limit:
-                rewards.append(result)
-            elif "corkscrew" in self.race and time > 317 and self.limit:
-                rewards.append(result)
-            elif "dirt1" in self.race and time > 122 and self.limit:
-                rewards.append(result)
-            elif "dirt3" in self.race and time > 218 and self.limit:
-                rewards.append(result)
-            elif "etrack2" in self.race and time > 448 and self.limit:
-                rewards.append(result)
-            elif "etrack3" in self.race and time > 385 and self.limit:
-                rewards.append(result)
-            elif "etrack4" in self.race and time > 423 and self.limit:
-                rewards.append(result)
-            elif "etrack6" in self.race and time > 355 and self.limit:
-                rewards.append(result)
+            # elif "aalborg" in self.race and time > 291 and self.limit:
+            #     rewards.append(result)
+            # elif "alpine1" in self.race and time > 543 and self.limit:
+            #     rewards.append(result)
+            # elif "alpine2" in self.race and time > 353 and self.limit:
+            #     rewards.append(result)
+            # elif "brondehach" in self.race and time > 297 and self.limit:
+            #     rewards.append(result)
+            # elif "corkscrew" in self.race and time > 317 and self.limit:
+            #     rewards.append(result)
+            # elif "dirt1" in self.race and time > 122 and self.limit:
+            #     rewards.append(result)
+            # elif "dirt3" in self.race and time > 218 and self.limit:
+            #     rewards.append(result)
+            # elif "etrack2" in self.race and time > 448 and self.limit:
+            #     rewards.append(result)
+            # elif "etrack3" in self.race and time > 385 and self.limit:
+            #     rewards.append(result)
+            # elif "etrack4" in self.race and time > 423 and self.limit:
+            #     rewards.append(result)
+            # elif "etrack6" in self.race and time > 355 and self.limit:
+            #     rewards.append(result)
             elif "forza" in self.race and time > 390 and self.limit:
                 rewards.append(result)
             elif "gtrack1" in self.race and time > 149 and self.limit:
@@ -258,7 +258,7 @@ class Evolution:
             parameter.data += self.learning_rate * gradient[i]
 
     def run(self):
-        for i in range(self.iterations):
+        for i in range(0, self.iterations):
             print("Iteration: {}".format(i))
             # Get noised parameter sets
             model_sets, noise_sets = self.noise_models()
@@ -266,6 +266,8 @@ class Evolution:
             reward_vector = self.compute_rewards(model_sets)
             # Update parameters using the noised parameters and the race outcome
             self.update_parameters(reward_vector, noise_sets)
+            if (i+1) % 25 == 0:
+                torch.save(self.model.state_dict(), "models/it{}.pt".format(i+1))
             torch.save(self.model.state_dict(), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
 
 
