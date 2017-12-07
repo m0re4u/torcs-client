@@ -30,7 +30,8 @@ class Evolution:
 
         # Executable config
         self.headless = exec_params['headless']
-        self.race_config = os.path.join(self.torcspath, exec_params['race_config'])
+        self.race_config = os.path.join(
+            self.torcspath, exec_params['race_config'])
 
         self.iterations = es_params['iterations']
         self.population_size = es_params['population_size']
@@ -39,6 +40,7 @@ class Evolution:
 
         self.server = exec_params["server"]
         self.limit = exec_params["limit"]
+        self.test_mode = exec_params["test_races"]
 
         self.race = ""
         self.i = 0
@@ -50,9 +52,13 @@ class Evolution:
             new_model = deepcopy(self.model)
             new_noise = []
             for param_tensor in new_model.parameters():
-                noise = torch.Tensor(np.random.normal(size=param_tensor.size()))
-                param_tensor.data += self.standard_dev * noise
-                new_noise.append(noise)
+                if self.test_mode:
+                    new_noise.append(param_tensor.data)
+                else:
+                    noise = torch.Tensor(
+                        np.random.normal(size=param_tensor.size()))
+                    param_tensor.data += self.standard_dev * noise
+                    new_noise.append(noise)
 
             model_sets.append(new_model)
             noise_sets.append(new_noise)
@@ -96,10 +102,12 @@ class Evolution:
 
     def init_drivers(self, index, params):
         # Save current parameter set for the client to read in
-        torch.save(params, "models/temp_models/evol_driver{}-{}-{}.pt".format(self.standard_dev, self.learning_rate, index))
+        torch.save(params, "models/temp_models/evol_driver{}-{}-{}.pt".format(
+            self.standard_dev, self.learning_rate, index))
         cmd = [
             "python3", self.torcspath + "/run.py",
-            "-f", ("models/temp_models/evol_driver{}-{}-{}.pt").format(self.standard_dev, self.learning_rate, index),
+            "-f", ("models/temp_models/evol_driver{}-{}-{}.pt").format(
+                self.standard_dev, self.learning_rate, index),
             "-H", str(HIDDEN_NEURONS),
             "-p", "{}".format(index + 3001)
         ]
@@ -116,17 +124,18 @@ class Evolution:
             if not self.server:
                 cmd = ["torcs -r " + os.path.join(self.race_config, race)]
             else:
-                cmd = ["/home/jadegeest/torcs/bin/torcs -r " + os.path.join(self.race_config, race)]
+                cmd = ["/home/jadegeest/torcs/bin/torcs -r " +
+                       os.path.join(self.race_config, race)]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
-            if not server:
+            if not self.server:
                 cmd = ["torcs"]
             else:
                 cmd = ["/home/jadegeest/torcs/bin/torcs"]
         start = time.time()
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
         proc = subprocess.Popen(
-        cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+            cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
 
         self.i += 1
 
@@ -220,7 +229,6 @@ class Evolution:
 
         # Start torcs and wait for it to finish
         torcs_proc, race, start = self.run_torcs()
-        print(procs, torcs_proc.pid)
         res = torcs_proc.communicate()
 
         end = time.time()
@@ -232,8 +240,9 @@ class Evolution:
 
         reward_vector = self.combine_results(results)
 
-        if sum(reward_vector) == 0:
-            self.i -= 1
+        if not self.test_mode:
+            if sum(reward_vector) == 0:
+                self.i -= 1
 
         print("Rewards:\n {}".format(reward_vector))
         return reward_vector
@@ -250,7 +259,8 @@ class Evolution:
                 if self.standard_dev == 0:
                     update = (1 / self.population_size) * reward * noise
                 else:
-                    update = ((self.population_size * self.standard_dev)) * reward * noise
+                    update = ((self.population_size *
+                               self.standard_dev)) * reward * noise
 
                 gradient[j] += update
 
@@ -264,11 +274,14 @@ class Evolution:
             model_sets, noise_sets = self.noise_models()
             # Compute reward based on a simulated race
             reward_vector = self.compute_rewards(model_sets)
-            # Update parameters using the noised parameters and the race outcome
+            # Update parameters using the noised parameters and the race
+            # outcome
             self.update_parameters(reward_vector, noise_sets)
-            if (i+1) % 25 == 0:
-                torch.save(self.model.state_dict(), "models/it{}.pt".format(i+1))
-            torch.save(self.model.state_dict(), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
+            if (i + 1) % 25 == 0:
+                torch.save(self.model.state_dict(),
+                           "models/it{}.pt".format(i + 1))
+            torch.save(self.model.state_dict(
+            ), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
 
 
 def main(model_file, exec_params, es_params):
@@ -309,7 +322,12 @@ if __name__ == '__main__':
         action="store_true"
     )
     parser.add_argument(
-       "-server", "--server", default=False
+        "-server", "--server", default=False
+    )
+    parser.add_argument(
+        "--test_races", default=False, action="store_true", help="Sets the flag\
+        to perform test races. This means there is no noise added to the \
+        drivers"
     )
     parser.add_argument(
         "-limit", "--limit", default=False
@@ -336,7 +354,8 @@ if __name__ == '__main__':
         'race_config': args.race_config,
         'headless': not args.no_headless,
         'server': args.server,
-        'limit': args.limit
+        'limit': args.limit,
+        'test_races': args.test_races
     }
 
     main(args.init_model, exec_params, ES_params)

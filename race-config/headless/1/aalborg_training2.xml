@@ -13,7 +13,7 @@
   <section name="Tracks">
     <attnum name="maximum number" val="1"/>
     <section name="1">
-      <attstr name="name" val="forza"/>
+      <attstr name="name" val="aalborg"/>
       <attstr name="category" val="road"/>
     </section>
 
@@ -50,66 +50,6 @@
     <attstr name="focused module" val="scr_server"/>
     <section name="1">
       <attnum name="idx" val="0"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="2">
-      <attnum name="idx" val="1"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="3">
-      <attnum name="idx" val="2"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="4">
-      <attnum name="idx" val="3"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="5">
-      <attnum name="idx" val="4"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="6">
-      <attnum name="idx" val="5"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="7">
-      <attnum name="idx" val="6"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="8">
-      <attnum name="idx" val="7"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="9">
-      <attnum name="idx" val="8"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="10">
-      <attnum name="idx" val="9"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="11">
-      <attnum name="idx" val="10"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="12">
-      <attnum name="idx" val="11"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="13">
-      <attnum name="idx" val="12"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="14">
-      <attnum name="idx" val="13"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="15">
-      <attnum name="idx" val="14"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-    <section name="16">
-      <attnum name="idx" val="15"/>
       <attstr name="module" val="scr_server"/>
     </section>
 

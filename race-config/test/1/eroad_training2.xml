@@ -52,10 +52,7 @@
       <attnum name="idx" val="0"/>
       <attstr name="module" val="scr_server"/>
     </section>
-    <section name="2">
-      <attnum name="idx" val="1"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
+
   </section>
 
   <section name="Configuration">
