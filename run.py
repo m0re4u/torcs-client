@@ -70,7 +70,7 @@ if __name__ == '__main__':
     )
 
     # Init client
-    if not args.dump:
+    if args.dump:
         print("Run dump")
         client = Client(
             driver=ANNDriverJasper(

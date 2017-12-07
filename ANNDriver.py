@@ -57,7 +57,7 @@ class ANNDriver(Driver):
             sensors = self.normalize_sensors(sensors)
 
         # Forward pass our model
-        y = self.model(Variable(torch.Tensor(sensors)))
+        y = self.model(Variable(torch.Tensor(sensors)))[0]
 
         accelerate, brake, steer = self.smooth_commands(y.data)
 

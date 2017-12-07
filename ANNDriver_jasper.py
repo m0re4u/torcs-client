@@ -138,12 +138,14 @@ class ANNDriverJasper(Driver):
                 sensors = self.normalize_sensors(sensors)
 
             # Forward pass our model
-            y = self.model(Variable(torch.Tensor(sensors)))
+            y = self.model(Variable(torch.Tensor(sensors)))[0]
             # Create command from model output
 
             command.accelerator = np.clip(y.data[0], 0, 1)
             command.brake = np.clip(y.data[1], 0, 1)
             command.steering = np.clip(y.data[2], -1, 1)
+
+            command = self.smooth_commands(command)
 
             # print(self.race_started and not self.is_leader)
             # print("LEADER", self.is_leader)
@@ -233,6 +235,19 @@ class ANNDriverJasper(Driver):
                 new_sensors.append(sensor / 200)
 
         return new_sensors
+
+    def smooth_commands(self, command):
+        if command.accelerate > 0.85 and self.time < 1000:
+            command.accelerate = 1.0
+            command.brake = 0.0
+
+        if command.accelerate > 0.98 and brake < 0.1:
+            command.accelerate = 1.0
+            command.brake = 0.0
+
+        self.time += 1
+
+        return command
 
 
 class StupidDriver(Driver):
