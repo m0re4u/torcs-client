@@ -11,11 +11,7 @@ from torch.autograd import Variable
 class ANNDriver(Driver):
     def __init__(self, model_file, H, depth, record_train_file=None, normalize=False):
         super().__init__(False)
-        if normalize:
-            self.norm = True
-        else:
-            self.norm = False
-
+        self.norm = normalize
         self.time = 0
 
         # Select right model
@@ -52,8 +48,6 @@ class ANNDriver(Driver):
                    carstate.angle, *(carstate.distances_from_edge)]
 
         if self.norm:
-            # Sensor normalization -> ?
-            print("NORMALIZE!!!!")
             sensors = self.normalize_sensors(sensors)
 
         # Forward pass our model
@@ -66,10 +60,6 @@ class ANNDriver(Driver):
         command.accelerator = np.clip(accelerate, 0, 1)
         command.brake = np.clip(brake, 0, 1)
         command.steering = np.clip(steer, -1, 1)
-
-        # print("Accelerate: {}".format(command.accelerator))
-        # print("Brake:      {}".format(command.brake))
-        # print("Steer:      {}".format(command.steering))
 
         # Naive switching of gear
         self.switch_gear(carstate, command)

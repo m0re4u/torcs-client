@@ -34,8 +34,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-r", "--record", help="The path to a file that will contain recorded \
-        actuator & sensor data",
-        default=None
+        actuator & sensor data", action="store_true", default=None
     )
 
     parser.add_argument(
@@ -61,7 +60,7 @@ if __name__ == '__main__':
     elif args.v == 1:
         level = logging.INFO
     else:
-        # Filthy hack to suppress all logging output
+        # Suppress all logging output
         level = 100000
 
     logging.basicConfig(
@@ -71,13 +70,11 @@ if __name__ == '__main__':
 
     # Init client
     if args.dump:
-        print("Run dump")
         client = Client(
             driver=ANNDriverJasper(
                 args.model_file, args.hidden, args.depth, args.port, args.record, args.norm),
             port=args.port)
     else:
-        print("Run normally")
         client = Client(
             driver=ANNDriver(
                 args.model_file, args.hidden, args.depth, args.record, args.norm),

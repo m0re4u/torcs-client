@@ -28,24 +28,25 @@ class Evolution:
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
 
-        # Executable config
+        # Configuration for the execution of torcs and its clients
         self.headless = exec_params['headless']
         self.race_config = os.path.join(
             self.torcspath, exec_params['race_config'])
+        self.server = exec_params["server"]
+        self.limit = exec_params["limit"]
+        self.test_mode = exec_params["test_races"]
 
+        self.race = ""  # current race filename
+        self.i = 0      # current race index
+
+        # Confiuration for the ES algorithm
         self.iterations = es_params['iterations']
         self.population_size = es_params['population_size']
         self.standard_dev = es_params['standard_dev']
         self.learning_rate = es_params['learning_rate']
 
-        self.server = exec_params["server"]
-        self.limit = exec_params["limit"]
-        self.test_mode = exec_params["test_races"]
-
-        self.race = ""
-        self.i = 0
-
     def noise_models(self):
+        """Generate noise set for perturbed models"""
         model_sets = []
         noise_sets = []
         for i in range(self.population_size):
@@ -66,6 +67,7 @@ class Evolution:
         return model_sets, noise_sets
 
     def get_results(self, race):
+        """Extract results from the last raced game"""
         result_path = os.path.expanduser("~/.torcs/results")
         out_dir = os.path.join(
             result_path,
@@ -101,6 +103,7 @@ class Evolution:
         return results
 
     def init_drivers(self, index, params):
+        """Launch client drivers"""
         # Save current parameter set for the client to read in
         torch.save(params, "models/temp_models/evol_driver{}-{}-{}.pt".format(
             self.standard_dev, self.learning_rate, index))
@@ -115,6 +118,7 @@ class Evolution:
         return proc.pid
 
     def run_torcs(self):
+        """Run torcs either with or without rendering the GUI"""
         if self.headless:
             # Pick a random config (random track)
             race_list = os.listdir(self.race_config)
@@ -142,7 +146,7 @@ class Evolution:
         return proc, race, start
 
     def combine_results(self, results):
-
+        """Combine the results from the last race into a reward vector"""
         rewards = []
         for rank, driver_index, _, time, laps in results:
             result = 0
@@ -215,6 +219,7 @@ class Evolution:
         return rewards
 
     def compute_rewards(self, model_sets):
+        """Launch drivers & torcs and get their rewards for 1 race"""
         reward_vector = np.zeros(self.population_size)
 
         # Remove old drivers:
@@ -248,6 +253,9 @@ class Evolution:
         return reward_vector
 
     def update_parameters(self, reward_vector, noise_sets):
+        """
+        Update the parameters for the base driver based on the reward vector
+        """
         gradient = []
         for p in self.model.parameters():
             gradient.append(torch.zeros(p.size()))
@@ -312,7 +320,7 @@ if __name__ == '__main__':
         default=1e-06, type=float
     )
     parser.add_argument(
-        "-c", "--race_config", help="Race configuration file (xml) directory. \
+        "-c", "--race_config", help="Race configuration files (xml) directory. \
         This will also choose the right population size (name of subdirectory)",
         default=os.path.dirname(filepath) + "/race-config/headless/10/"
     )
