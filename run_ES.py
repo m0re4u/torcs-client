@@ -250,7 +250,7 @@ class Evolution:
                 if self.standard_dev == 0:
                     update = (1 / self.population_size) * reward * noise
                 else:
-                    update = ((self.population_size * self.standard_dev)) * reward * noise
+                    update = (self.population_size * self.standard_dev) * reward * noise
 
                 gradient[j] += update
 
@@ -269,6 +269,9 @@ class Evolution:
             if (i+1) % 25 == 0:
                 torch.save(self.model.state_dict(), "models/it{}.pt".format(i+1))
             torch.save(self.model.state_dict(), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
+
+            if i % 25 == 0:
+                torch.save(self.model.state_dict(), "models/i{}.pt".format(i))
 
 
 def main(model_file, exec_params, es_params):
@@ -298,7 +301,7 @@ if __name__ == '__main__':
     parser.add_argument(
         "-c", "--race_config", help="Race configuration file (xml) directory. \
         This will also choose the right population size (name of subdirectory)",
-        default=os.path.dirname(filepath) + "/race-config/headless/2/"
+        default=os.path.dirname(filepath) + "/race-config/headless/10/"
     )
     parser.add_argument(
         "-m", "--init_model", help="initial model (for pytorch)",
