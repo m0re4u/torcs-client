@@ -28,6 +28,11 @@ class Evolution:
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
 
+        for i, parameter in enumerate(self.model.parameters()):
+            if i == 0:
+                random_tensor = torch.rand(parameter.data.size()[0], 36) * 1e-05
+                parameter.data = torch.cat((parameter.data, random_tensor), 1)
+
         # Configuration for the execution of torcs and its clients
         self.headless = exec_params['headless']
         self.race_config = os.path.join(
@@ -112,7 +117,8 @@ class Evolution:
             "-f", ("models/temp_models/evol_driver{}-{}-{}.pt").format(
                 self.standard_dev, self.learning_rate, index),
             "-H", str(HIDDEN_NEURONS),
-            "-p", "{}".format(index + 3001)
+            "-p", "{}".format(index + 3001),
+            "-o True"
         ]
         proc = subprocess.Popen(cmd)
         return proc.pid
@@ -129,7 +135,7 @@ class Evolution:
                 cmd = ["torcs -r " + os.path.join(self.race_config, race)]
             else:
                 cmd = ["/home/jadegeest/torcs/bin/torcs -r " +
-                       os.path.join(self.race_config, race)]
+                       os.path.join(self.race_config, race) ]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
             if not self.server:

@@ -33,6 +33,10 @@ if __name__ == '__main__':
         default=False, type=bool
     )
     parser.add_argument(
+        "-o", "--opp",
+        default=False, type=bool
+    )
+    parser.add_argument(
         "-r", "--record", help="The path to a file that will contain recorded \
         actuator & sensor data", action="store_true", default=None
     )
@@ -77,7 +81,7 @@ if __name__ == '__main__':
     else:
         client = Client(
             driver=ANNDriver(
-                args.model_file, args.hidden, args.depth, args.record, args.norm),
+                args.model_file, args.hidden, args.depth, args.record, args.norm, args.opp),
             port=args.port)
 
     try:
