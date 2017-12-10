@@ -12,6 +12,7 @@ import argparse
 import random
 from copy import deepcopy
 from bs4 import BeautifulSoup
+import signal
 
 HIDDEN_NEURONS = 100
 
@@ -24,14 +25,19 @@ class Evolution:
         self.modelspath = os.path.join(self.torcspath, "models")
 
         # Init model
-        self.model = nn.train.TwoLayerNet(22, HIDDEN_NEURONS, 3)
-        self.model.load_state_dict(torch.load(
-            model_file, map_location=lambda storage, loc: storage))
+        if exec_params["continue_training"]:
+            self.model = nn.train.TwoLayerNet(22+36, HIDDEN_NEURONS, 3)
+            self.model.load_state_dict(torch.load(
+                model_file, map_location=lambda storage, loc: storage))
+        else:
+            self.model = nn.train.TwoLayerNet(22, HIDDEN_NEURONS, 3)
+            self.model.load_state_dict(torch.load(
+                model_file, map_location=lambda storage, loc: storage))
 
-        for i, parameter in enumerate(self.model.parameters()):
-            if i == 0:
-                random_tensor = torch.rand(parameter.data.size()[0], 36) * 1e-05
-                parameter.data = torch.cat((parameter.data, random_tensor), 1)
+            for i, parameter in enumerate(self.model.parameters()):
+                if i == 0:
+                    random_tensor = torch.rand(parameter.data.size()[0], 36) * 1e-06
+                    parameter.data = torch.cat((parameter.data, random_tensor), 1)
 
         # Configuration for the execution of torcs and its clients
         self.headless = exec_params['headless']
@@ -110,11 +116,11 @@ class Evolution:
     def init_drivers(self, index, params):
         """Launch client drivers"""
         # Save current parameter set for the client to read in
-        torch.save(params, "models/temp_models/evol_driver{}-{}-{}.pt".format(
+        torch.save(params, "models/temp_models/evol_driver{}.pt".format(
             self.standard_dev, self.learning_rate, index))
         cmd = [
             "python3", self.torcspath + "/run.py",
-            "-f", ("models/temp_models/evol_driver{}-{}-{}.pt").format(
+            "-f", ("models/temp_models/evol_driver{}.pt").format(
                 self.standard_dev, self.learning_rate, index),
             "-H", str(HIDDEN_NEURONS),
             "-p", "{}".format(index + 3001),
@@ -281,21 +287,40 @@ class Evolution:
         for i, parameter in enumerate(self.model.parameters()):
             parameter.data += self.learning_rate * gradient[i]
 
+    class TimeoutException(Exception):  # Custom exception class
+        pass
+
+    def timeout_handler(self, signum, frame):  # Custom signal handler
+        raise self.TimeoutException
+
     def run(self):
+        # Change the behavior of SIGALRM
+        signal.signal(signal.SIGALRM, self.timeout_handler)
+
         for i in range(0, self.iterations):
-            print("Iteration: {}".format(i))
-            # Get noised parameter sets
-            model_sets, noise_sets = self.noise_models()
-            # Compute reward based on a simulated race
-            reward_vector = self.compute_rewards(model_sets)
-            # Update parameters using the noised parameters and the race
-            # outcome
-            self.update_parameters(reward_vector, noise_sets)
-            if (i + 1) % 25 == 0:
-                torch.save(self.model.state_dict(),
-                           "models/it{}.pt".format(i + 1))
-            torch.save(self.model.state_dict(
-            ), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
+            signal.alarm(240)
+
+            try:
+                print("Iteration: {}".format(i))
+                # Get noised parameter sets
+                model_sets, noise_sets = self.noise_models()
+                # Compute reward based on a simulated race
+                reward_vector = self.compute_rewards(model_sets)
+                # Update parameters using the noised parameters and the race
+                # outcome
+                self.update_parameters(reward_vector, noise_sets)
+                if (i + 1) % 25 == 0:
+                    torch.save(self.model.state_dict(),
+                               "models/it{}.pt".format(i + 1))
+                torch.save(self.model.state_dict(
+                ), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
+            except self.TimeoutException:
+                print("Timeout, go to next iteration")
+                continue  # continue the for loop if function A takes more than 5 second
+            else:
+                # Reset the alarm
+                signal.alarm(0)
+
 
 
 def main(model_file, exec_params, es_params):
@@ -339,6 +364,9 @@ if __name__ == '__main__':
         "-server", "--server", default=False
     )
     parser.add_argument(
+        "-cont", "--continue_training", default=False, type=bool
+    )
+    parser.add_argument(
         "--test_races", default=False, action="store_true", help="Sets the flag\
         to perform test races. This means there is no noise added to the \
         drivers"
@@ -369,7 +397,8 @@ if __name__ == '__main__':
         'headless': not args.no_headless,
         'server': args.server,
         'limit': args.limit,
-        'test_races': args.test_races
+        'test_races': args.test_races,
+        'continue_training': args.continue_training
     }
 
     main(args.init_model, exec_params, ES_params)

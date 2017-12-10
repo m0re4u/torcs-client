@@ -9,10 +9,11 @@ from torch.autograd import Variable
 
 
 class ANNDriver(Driver):
-    def __init__(self, model_file, H, depth, record_train_file=None, normalize=False):
+    def __init__(self, model_file, H, depth, record_train_file=None, normalize=False, opp=False):
         super().__init__(False)
         self.norm = normalize
         self.time = 0
+        self.opp = opp
 
         # Select right model
         if depth == 3:
@@ -20,7 +21,11 @@ class ANNDriver(Driver):
         elif depth == 5:
             self.model = train.FiveLayerNet(22, H, 3)
         else:
-            self.model = train.TwoLayerNet(22, H, 3)
+            if opp:
+                self.model = train.TwoLayerNet(22 + 36, H, 3)
+            else:
+                self.model = train.TwoLayerNet(22, H, 3)
+
         # Load model
         self.model.load_state_dict(torch.load(
             model_file, map_location=lambda storage, loc: storage))
@@ -44,8 +49,12 @@ class ANNDriver(Driver):
 
     def drive(self, carstate: State) -> Command:
         # Select the sensors we need for our model
-        sensors = [carstate.speed_x, carstate.distance_from_center,
-                   carstate.angle, *(carstate.distances_from_edge)]
+        if self.opp:
+            sensors = [carstate.speed_x, carstate.distance_from_center,
+                   carstate.angle, *(carstate.distances_from_edge), *(carstate.opponents)]
+        else:
+            sensors = [carstate.speed_x, carstate.distance_from_center,
+                       carstate.angle, *(carstate.distances_from_edge)]
 
         if self.norm:
             sensors = self.normalize_sensors(sensors)

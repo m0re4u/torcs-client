@@ -24,10 +24,11 @@ class TwoLayerNet(torch.nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
+
         h = self.linear1(x).view(1, -1)
         h = F.tanh(h)
         h = self.linear2(h)
-        h = F.tanh(h).view(1, -1)
+        h = F.tanh(h).view(1,-1)
         return h
 
 
