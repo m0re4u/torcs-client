@@ -107,8 +107,11 @@ class Evolution:
                 # Driver time
                 float(section.find('attnum', attrs={'name': 'time'})['val']),
                 # No. of laps completed
-                int(section.find('attnum', attrs={'name': 'laps'})['val'])
-            )
+                int(section.find('attnum', attrs={'name': 'laps'})['val']),
+                # Damage
+                int(section.find('attnum', attrs={'name': 'dammages'})['val'])
+
+        )
             for section in rank_soup.findAll('section')
         ]
         return results
@@ -160,7 +163,7 @@ class Evolution:
     def combine_results(self, results):
         """Combine the results from the last race into a reward vector"""
         rewards = []
-        for rank, driver_index, _, time, laps in results:
+        for rank, driver_index, _, time, laps, dmg in results:
             result = 0
 
             # Did not complete all labs at Aalborg track
@@ -211,7 +214,7 @@ class Evolution:
 
                 # Check how many cars in front crashed
                 num_cars_crashed = 0
-                for rank2, driver_index2, _, time2, laps2 in results:
+                for rank2, driver_index2, _, time2, laps2, dmg2 in results:
                     if driver_index2 < driver_index and laps2 != 3:
                         num_cars_crashed += 1
 
@@ -221,6 +224,9 @@ class Evolution:
                 # Overtaking component
                 start_rank = driver_index + 1
                 result += 50 * (start_rank - rank - num_cars_crashed)
+
+                # Damage
+                result -= dmg / 10
 
                 # Minimum of 0
                 if result < 0:

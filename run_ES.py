@@ -96,9 +96,9 @@ class Evolution:
                 # Driver time
                 float(section.find('attnum', attrs={'name': 'time'})['val']),
                 # No. of laps completed
-                int(section.find('attnum', attrs={'name': 'laps'})['val'])
+                int(section.find('attnum', attrs={'name': 'laps'})['val']),
                 # Damage
-                int(section.find('attnum', attrs={'name': 'dammages'})['val']),
+                int(section.find('attnum', attrs={'name': 'dammages'})['val'])
             )
             for section in rank_soup.findAll('section')
         ]
@@ -211,6 +211,9 @@ class Evolution:
                 # Overtaking component
                 start_rank = driver_index + 1
                 result += 50 * (start_rank - rank - num_cars_crashed)
+
+                # Damage
+                result -= dmg / 10
 
                 # Minimum of 0
                 if result < 0:
