@@ -9,7 +9,7 @@ import pandas as pd
 
 
 class TwoLayerNet(torch.nn.Module):
-    def __init__(self, D_in, H, D_out, server=False):
+    def __init__(self, D_in, H, D_out):
         """
         In the constructor we instantiate two nn.Linear modules and assign them as
         member variables.
@@ -17,7 +17,6 @@ class TwoLayerNet(torch.nn.Module):
         super(TwoLayerNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
         self.linear2 = torch.nn.Linear(H, D_out)
-        self.server = server
 
     def forward(self, x):
         """
@@ -25,16 +24,10 @@ class TwoLayerNet(torch.nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
-        if self.server:
-            h = self.linear1(x).view(1, -1)
-            h = F.tanh(h)
-            h = self.linear2(h)
-            h = F.tanh(h).view(1, -1)
-        else:
-            h = self.linear1(x)
-            h = F.tanh(h)
-            h = self.linear2(h)
-            h = F.tanh(h)
+        h = self.linear1(x)
+        h = F.tanh(h)
+        h = self.linear2(h)
+        h = F.tanh(h)
         return h
 
 

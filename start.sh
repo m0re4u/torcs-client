@@ -1,1 +1,3 @@
-run.py
+#!/bin/bash
+
+python3 run.py

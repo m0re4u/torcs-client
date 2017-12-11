@@ -91,13 +91,15 @@ class ANNDriver(Driver):
 
             if not self.crash_recorded:
                 self.crash_recorded = True
-                self.swarm_info_partner["crashes"].append(carstate.distance_raced)
+                self.swarm_info_partner["crashes"].append(
+                    carstate.distance_raced)
         # NOT CRASHED
         else:
             self.crash_recorded = False
 
-            # Forward pass our model
-            y = self.model(Variable(torch.Tensor(sensors)))
+            # Forward pass our model - has some reshape because of the Dropbox
+            # server -___-
+            y = self.model(Variable(torch.Tensor(sensors)).view(1, len(sensors)))[0]
 
             # Apply heuristics to the output of the neural network
             accelerate, brake, steer = self.apply_heuristics(y.data)
@@ -115,7 +117,8 @@ class ANNDriver(Driver):
 
         if self.record is True:
             sensor_string = ",".join([str(x) for x in sensors]) + "\n"
-            self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
+            self.file_handler.write(str(
+                y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
 
         return command
 
@@ -177,7 +180,8 @@ class ANNDriver(Driver):
             try:
                 self.swarm_info["position"] = carstate.race_position
                 with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
-                    pickle.dump(self.swarm_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(self.swarm_info, handle,
+                                protocol=pickle.HIGHEST_PROTOCOL)
             except Exception:
                 pass
             path = os.path.abspath(os.path.dirname(__file__))
@@ -193,7 +197,8 @@ class ANNDriver(Driver):
 
                 self.swarm_info["position"] = carstate.race_position
                 with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
-                    pickle.dump(self.swarm_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(self.swarm_info, handle,
+                                protocol=pickle.HIGHEST_PROTOCOL)
 
                 if carstate.race_position > int(self.swarm_info_partner["position"]):
                     self.is_leader = False
