@@ -24,6 +24,8 @@ class Evolution:
         self.torcspath = os.path.dirname(os.path.realpath(__file__))
         self.modelspath = os.path.join(self.torcspath, "models")
 
+        self.proc = subprocess
+
         # Init model
         if exec_params["continue_training"]:
             self.model = nn.train.TwoLayerNet(22 + 36, HIDDEN_NEURONS, 3)
@@ -155,12 +157,12 @@ class Evolution:
                 cmd = ["/home/jadegeest/torcs/bin/torcs"]
         start = time.time()
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
-        proc = subprocess.Popen(
+        self.proc = subprocess.Popen(
             cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
 
         self.i += 1
 
-        return proc, race, start
+        return self.proc, race, start
 
     def combine_results(self, results):
         """Combine the results from the last race into a reward vector"""
@@ -324,6 +326,10 @@ class Evolution:
                 ), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
             except self.TimeoutException:
                 print("Timeout, go to next iteration")
+                try:
+                    os.killpg(self.proc.pid)
+                except:
+                    print("Could not kill torcs")
                 continue  # continue the for loop if function A takes more than 5 second
             else:
                 # Reset the alarm

@@ -209,10 +209,11 @@ class ANNDriver(Driver):
                 pass
 
     def check_swarm(self, command, carstate):
-        for crash in self.swarm_info_partner["crashes"]:
-            if crash - 100 < carstate.distance_raced < crash - 30:
-                if command.accelerator > 0.9:
-                    command.accelerator = 0.5
+        if 'crashes' in self.swarm_info_partner:
+            for crash in self.swarm_info_partner["crashes"]:
+                if crash - 100 < carstate.distance_raced < crash - 30:
+                    if command.accelerator > 0.9:
+                        command.accelerator = 0.5
 
         return command
 
