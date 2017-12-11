@@ -24,9 +24,6 @@ class Evolution:
         self.torcspath = os.path.dirname(os.path.realpath(__file__))
         self.modelspath = os.path.join(self.torcspath, "models")
 
-        self.proc = subprocess
-        self.torcs_proc = subprocess
-
         # Init model
         if exec_params["continue_training"]:
             self.model = nn.train.TwoLayerNet(22 + 36, HIDDEN_NEURONS, 3)
@@ -146,7 +143,7 @@ class Evolution:
             race = race_list[self.i % len(race_list)]
             self.race = race
             if not self.server:
-                cmd = ["torcs -r " + os.path.join(self.race_config, race)]
+                cmd = ["torcs", "-r", os.path.join(self.race_config, race)]
             else:
                 cmd = ["/home/jadegeest/torcs/bin/torcs -r " +
                        os.path.join(self.race_config, race)]
@@ -158,12 +155,14 @@ class Evolution:
                 cmd = ["/home/jadegeest/torcs/bin/torcs"]
         start = time.time()
         print("Running torcs with race: {} at {:04.3f}".format(race, start))
-        self.proc = subprocess.Popen(
-            cmd, stdout=subprocess.PIPE, shell=True, universal_newlines=True)
+        t_proc = subprocess.Popen(
+            cmd, stdout=subprocess.PIPE, shell=False, universal_newlines=True,
+            preexec_fn=os.setsid
+        )
 
         self.i += 1
 
-        return self.proc, race, start
+        return t_proc, race, start
 
     def combine_results(self, results):
         """Combine the results from the last race into a reward vector"""
@@ -255,9 +254,37 @@ class Evolution:
             proc = self.init_drivers(i, model.state_dict())
             procs.append(proc)
 
-        # Start torcs and wait for it to finish
-        self.torcs_proc, race, start = self.run_torcs()
-        res = self.torcs_proc.communicate()
+        # Change the behavior of SIGALRM
+        signal.signal(signal.SIGALRM, self.timeout_handler)
+
+        signal.alarm(1)
+        try:
+            torcs_proc, race, start = self.run_torcs()
+            res = torcs_proc.communicate()
+        except self.TimeoutException:
+            print("Timeout, go to next iteration")
+            try:
+                # Kill torcs
+                os.killpg(os.getpgid(torcs_proc.pid), signal.SIGKILL)
+                for pr in procs:
+                    os.kill(pr, signal.SIGKILL)
+            except Exception as e:
+                print("Could not kill torcs: {}".format(e))
+            return None
+        except KeyboardInterrupt:
+            print("KeyboardInterrupt, exiting..")
+            try:
+                # Kill torcs
+                os.killpg(os.getpgid(torcs_proc.pid), signal.SIGKILL)
+                # Kill drivers
+                for pr in procs:
+                    os.kill(pr, signal.SIGKILL)
+            except Exception as e:
+                print("Encountered errors but im shutting down anyway")
+            exit()
+        else:
+            # Reset the alarm
+            signal.alarm(0)
 
         end = time.time()
         print("Finished torcs at {:04.3f}, took {:04.3f} seconds".format(
@@ -305,36 +332,28 @@ class Evolution:
         raise self.TimeoutException
 
     def run(self):
-        # Change the behavior of SIGALRM
-        signal.signal(signal.SIGALRM, self.timeout_handler)
-
-        for i in range(0, self.iterations):
-            signal.alarm(240)
-
-            try:
-                print("Iteration: {}".format(i))
-                # Get noised parameter sets
-                model_sets, noise_sets = self.noise_models()
-                # Compute reward based on a simulated race
-                reward_vector = self.compute_rewards(model_sets)
-                # Update parameters using the noised parameters and the race
-                # outcome
-                self.update_parameters(reward_vector, noise_sets)
-                if (i + 1) % 25 == 0:
-                    torch.save(self.model.state_dict(),
-                               "models/it{}.pt".format(i + 1))
-                torch.save(self.model.state_dict(
-                ), "models/output_gen_end{}-{}.pt".format(self.standard_dev, self.learning_rate))
-            except self.TimeoutException:
-                print("Timeout, go to next iteration")
-                try:
-                    os.killpg(self.torcs_proc.pid, signal.SIGTERM)
-                except Exception as e:
-                    print("Could not kill torcs with error:", e)
-                continue  # continue the for loop if function A takes more than 5 second
-            else:
-                # Reset the alarm
-                signal.alarm(0)
+        for i in range(self.iterations):
+            print("Iteration: {}".format(i))
+            # Get noised parameter sets
+            model_sets, noise_sets = self.noise_models()
+            # Compute reward based on a simulated race
+            reward_vector = self.compute_rewards(model_sets)
+            if reward_vector is None:
+                # If we have no reward vector, just skip the iteration
+                continue
+            # Update parameters using the noised parameters and the race
+            # outcome
+            self.update_parameters(reward_vector, noise_sets)
+            if (i + 1) % 25 == 0:
+                torch.save(
+                    self.model.state_dict(),
+                    "models/it{}.pt".format(i + 1)
+                )
+            torch.save(
+                self.model.state_dict(),
+                "models/output_gen_end{}-{}.pt".format(
+                    self.standard_dev, self.learning_rate)
+            )
 
 
 def main(model_file, exec_params, es_params):
