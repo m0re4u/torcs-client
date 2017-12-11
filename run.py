@@ -29,18 +29,18 @@ if __name__ == '__main__':
         default=False, action='store_true'
     )
     parser.add_argument(
-        "-dump", "--dump",
-        default=False, type=bool
+        "-dump", "--dump", action="store_true",
+        default=False
     )
     parser.add_argument(
-        "-o", "--opp",
-        default=False, type=bool
+        "-o", "--opp", action="store_true",
+        default=False
     )
     parser.add_argument(
         "-r", "--record", help="The path to a file that will contain recorded \
-        actuator & sensor data", action="store_true", default=None
+        actuator & sensor data", default=None
     )
-
+    # Torcs arguments
     parser.add_argument(
         '--hostname',
         help='Racing server host name.',
@@ -53,8 +53,10 @@ if __name__ == '__main__':
         type=int,
         default=3001
     )
-    parser.add_argument('-v', help='Debug log level, 0 is no logging, 1 is info, 2 is debug.',
-                        default='0', metavar="LVL", type=int)
+    parser.add_argument(
+        '-v', help='Debug log level, 0 is no logging, 1 is info, 2 is debug.',
+        default='0', metavar="LVL", type=int
+    )
 
     args = parser.parse_args()
 

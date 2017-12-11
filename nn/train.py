@@ -9,7 +9,7 @@ import pandas as pd
 
 
 class TwoLayerNet(torch.nn.Module):
-    def __init__(self, D_in, H, D_out):
+    def __init__(self, D_in, H, D_out, server=False):
         """
         In the constructor we instantiate two nn.Linear modules and assign them as
         member variables.
@@ -17,6 +17,7 @@ class TwoLayerNet(torch.nn.Module):
         super(TwoLayerNet, self).__init__()
         self.linear1 = torch.nn.Linear(D_in, H)
         self.linear2 = torch.nn.Linear(H, D_out)
+        self.server = server
 
     def forward(self, x):
         """
@@ -24,11 +25,16 @@ class TwoLayerNet(torch.nn.Module):
         a Variable of output data. We can use Modules defined in the constructor as
         well as arbitrary operators on Variables.
         """
-
-        h = self.linear1(x).view(1, -1)
-        h = F.tanh(h)
-        h = self.linear2(h)
-        h = F.tanh(h).view(1,-1)
+        if self.server:
+            h = self.linear1(x).view(1, -1)
+            h = F.tanh(h)
+            h = self.linear2(h)
+            h = F.tanh(h).view(1, -1)
+        else:
+            h = self.linear1(x)
+            h = F.tanh(h)
+            h = self.linear2(h)
+            h = F.tanh(h)
         return h
 
 
@@ -91,7 +97,7 @@ def main(train_file, cuda_enabled, params):
     elif params["depth"] == 3:
         model = ThreeLayerNet(D_in, H, D_out)
     else:
-        model = TwoLayerNet(D_in, H, D_out)
+        model = TwoLayerNet(D_in, H, D_out, params["server"])
 
     if cuda_enabled:
         model.cuda()
@@ -147,26 +153,33 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-H", "--hidden", help="Set the number of hidden neurons",
-        default="15", type=int
+        default="100", type=int
     )
     parser.add_argument(
         "-e", "--epochs", help="Set the number of epochs to run",
-        default="20000", type=int
+        default="300", type=int
     )
     parser.add_argument(
         "-b", "--batch", help="Set the batch size",
-        default="10000", type=int
+        default="10", type=int
     )
     parser.add_argument(
-        "-d", "--depth", help="Set depth of model",
+        "-d", "--depth", help="Set depth of model (number of hidden layers)",
         default="2", type=int
     )
     parser.add_argument(
         "-n", "--norm", help="Normalize sensor values between 0 and 1",
         default=False, action='store_true'
     )
-    parser.add_argument('--cuda', action='store_true', default=False,
-                        help='enables CUDA training')
+    parser.add_argument(
+        '--cuda', action='store_true', default=False,
+        help='enables CUDA training'
+    )
+    parser.add_argument(
+        '--local', action='store_true', default=True,
+        help='Tells the FNN to turn of any hacks we did to get it to work on \
+        the Dropbox server'
+    )
     args = parser.parse_args()
     cuda_enabled = args.cuda and torch.cuda.is_available()
 
@@ -181,6 +194,7 @@ if __name__ == '__main__':
         "hidden": args.hidden,
         "batch": args.batch,
         "depth": args.depth,
-        "norm": args.norm
+        "norm": args.norm,
+        "server": not args.local
     }
     main(args.train_file, cuda_enabled, param_dict)

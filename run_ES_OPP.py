@@ -26,7 +26,7 @@ class Evolution:
 
         # Init model
         if exec_params["continue_training"]:
-            self.model = nn.train.TwoLayerNet(22+36, HIDDEN_NEURONS, 3)
+            self.model = nn.train.TwoLayerNet(22 + 36, HIDDEN_NEURONS, 3)
             self.model.load_state_dict(torch.load(
                 model_file, map_location=lambda storage, loc: storage))
         else:
@@ -36,8 +36,10 @@ class Evolution:
 
             for i, parameter in enumerate(self.model.parameters()):
                 if i == 0:
-                    random_tensor = torch.rand(parameter.data.size()[0], 36) * 1e-06
-                    parameter.data = torch.cat((parameter.data, random_tensor), 1)
+                    random_tensor = torch.rand(
+                        parameter.data.size()[0], 36) * 1e-06
+                    parameter.data = torch.cat(
+                        (parameter.data, random_tensor), 1)
 
         # Configuration for the execution of torcs and its clients
         self.headless = exec_params['headless']
@@ -111,7 +113,7 @@ class Evolution:
                 # Damage
                 int(section.find('attnum', attrs={'name': 'dammages'})['val'])
 
-        )
+            )
             for section in rank_soup.findAll('section')
         ]
         return results
@@ -127,7 +129,7 @@ class Evolution:
                 self.standard_dev, self.learning_rate, index),
             "-H", str(HIDDEN_NEURONS),
             "-p", "{}".format(index + 3001),
-            "-o True"
+            "-o"
         ]
         proc = subprocess.Popen(cmd)
         return proc.pid
@@ -144,7 +146,7 @@ class Evolution:
                 cmd = ["torcs -r " + os.path.join(self.race_config, race)]
             else:
                 cmd = ["/home/jadegeest/torcs/bin/torcs -r " +
-                       os.path.join(self.race_config, race) ]
+                       os.path.join(self.race_config, race)]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
             if not self.server:
@@ -328,7 +330,6 @@ class Evolution:
                 signal.alarm(0)
 
 
-
 def main(model_file, exec_params, es_params):
     ev = Evolution(model_file, exec_params, es_params)
     print("Running with ES parameters:\n {}".format(es_params))
@@ -342,7 +343,7 @@ if __name__ == '__main__':
         description="")
     parser.add_argument(
         "-i", "--iterations", help="Number of iterations for the ES algorithm",
-        default=76, type=int
+        default=20, type=int
     )
     parser.add_argument(
         "-s", "--standard_dev", help="Standard deviation for the noise imposed \
@@ -367,10 +368,10 @@ if __name__ == '__main__':
         action="store_true"
     )
     parser.add_argument(
-        "-server", "--server", default=False
+        "-server", "--server", default=False, action="store_true"
     )
     parser.add_argument(
-        "-cont", "--continue_training", default=False, type=bool
+        "-cont", "--continue_training", default=False, action="store_true"
     )
     parser.add_argument(
         "--test_races", default=False, action="store_true", help="Sets the flag\
