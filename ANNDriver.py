@@ -6,25 +6,45 @@ import numpy as np
 import logging
 from nn import train
 from torch.autograd import Variable
+import pickle
+import os
 
 
 class ANNDriver(Driver):
-    def __init__(self, model_file, H, depth, record_train_file=None, normalize=False, opp=False):
+    def __init__(self, model_file, H, depth, port, record_train_file=None, normalize=False, opp=False):
         super().__init__(False)
         self.norm = normalize
         self.time = 0
         self.opp = opp
 
+        # Swarm variables
+        self.is_leader = True
+        self.standard_driver = Driver()
+        self.race_started = False
+        self.recovers = 0
+        self.recover_mode = False
+        self.speeds = []
+
+        self.swarm_info = {}
+        self.swarm_info["crashes"] = []
+        self.crash_recorded = False
+        self.swarm_info_partner = {}
+        self.port = port
+        self.partner_port = -1
+
+        # Check if opponent data is included in the input
+        if self.opp:
+            d_in = 22 + 36
+        else:
+            d_in = 22
+
         # Select right model
         if depth == 3:
-            self.model = train.ThreeLayerNet(22, H, 3)
+            self.model = train.ThreeLayerNet(d_in, H, 3)
         elif depth == 5:
-            self.model = train.FiveLayerNet(22, H, 3)
+            self.model = train.FiveLayerNet(d_in, H, 3)
         else:
-            if opp:
-                self.model = train.TwoLayerNet(22 + 36, H, 3)
-            else:
-                self.model = train.TwoLayerNet(22, H, 3)
+            self.model = train.TwoLayerNet(d_in, H, 3)
 
         # Load model
         self.model.load_state_dict(torch.load(
@@ -48,6 +68,8 @@ class ANNDriver(Driver):
             self.file_handler = None
 
     def drive(self, carstate: State) -> Command:
+        self.swarm_communicate(carstate=carstate)
+
         # Select the sensors we need for our model
         if self.opp:
             sensors = [carstate.speed_x, carstate.distance_from_center,
@@ -59,23 +81,42 @@ class ANNDriver(Driver):
         if self.norm:
             sensors = self.normalize_sensors(sensors)
 
-        # Forward pass our model
-        y = self.model(Variable(torch.Tensor(sensors)))[0]
-
-        accelerate, brake, steer = self.smooth_commands(y.data)
-
-        # Create command from model output
         command = Command()
-        command.accelerator = np.clip(accelerate, 0, 1)
-        command.brake = np.clip(brake, 0, 1)
-        command.steering = np.clip(steer, -1, 1)
+        distances = list(carstate.distances_from_edge)
 
-        # Naive switching of gear
-        self.switch_gear(carstate, command)
+        # CRASHED
+        off_road = all(distance == -1.0 for distance in distances)
+        if self.race_started and (off_road or self.recovers > 0):
+            command = self.recover(carstate, command)
+
+            if not self.crash_recorded:
+                self.crash_recorded = True
+                self.dict["crashes"].append(carstate.distance_raced)
+        # NOT CRASHED
+        else:
+            self.crash_recorded = False
+
+            # Forward pass our model
+            y = self.model(Variable(torch.Tensor(sensors)))[0]
+
+            # Apply heuristics to the output of the neural network
+            accelerate, brake, steer = self.apply_heuristics(y.data)
+
+            # Create command from model output
+            command.accelerator = np.clip(accelerate, 0, 1)
+            command.brake = np.clip(brake, 0, 1)
+            command.steering = np.clip(steer, -1, 1)
+
+            # Naive switching of gear
+            self.switch_gear(carstate, command)
+
+            if self.race_started and not self.is_leader and carstate.distance_from_start > 50:
+                command = self.check_swarm(command, carstate)
 
         if self.record is True:
             sensor_string = ",".join([str(x) for x in sensors]) + "\n"
             self.file_handler.write(str(y.data[0]) + "," + str(y.data[1]) + "," + str(y.data[2]) + "," + sensor_string)
+
         return command
 
     def switch_gear(self, carstate, command):
@@ -89,7 +130,7 @@ class ANNDriver(Driver):
         if not command.gear:
             command.gear = carstate.gear or 1
 
-    def smooth_commands(self, data):
+    def apply_heuristics(self, data):
         accelerate = data[0]
         brake = data[1]
         steer = data[2]
@@ -130,3 +171,70 @@ class ANNDriver(Driver):
                 new_sensors.append(sensor / 200)
 
         return new_sensors
+
+    def swarm_communicate(self, carstate):
+        if carstate.distance_raced < 3:
+            try:
+                self.swarm_info["position"] = carstate.race_position
+                with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
+                    pickle.dump(self.swarm_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
+            except:
+                pass
+            path = os.path.abspath(os.path.dirname(__file__))
+            for i in os.listdir(path):
+                if os.path.isfile(os.path.join(path, i)) and 'mjv_partner' in i and not str(self.port) in i:
+                    self.partner_port = i.strip('mjv_partner').strip('.txt')
+        else:
+            self.race_started = True
+
+            try:
+                with open("mjv_partner{}.txt".format(self.partner_port), 'rb') as handle:
+                    self.swarm_info_partner = pickle.load(handle)
+
+                self.swarm_info["position"] = carstate.race_position
+                with open("mjv_partner{}.txt".format(self.port), "wb") as handle:
+                    pickle.dump(self.swarm_info, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+                if carstate.race_position > int(self.swarm_info_partner["position"]):
+                    self.is_leader = False
+                else:
+                    self.is_leader = True
+            except:
+                print("Not able to read port", self.port)
+                pass
+
+    def check_swarm(self, command, carstate):
+        for crash in self.dict_teammate["crashes"]:
+            if crash - 100 < carstate.distance_raced < crash - 30:
+                if command.accelerator > 0.9:
+                    command.accelerator = 0.5
+
+        return command
+
+    def recover(self, carstate, command):
+        self.recover_mode = True
+        dist = abs(carstate.distance_from_center)
+        front_right = carstate.angle < 0 and carstate.distance_from_center < 0
+
+        front_left = carstate.angle > 0 and carstate.distance_from_center > 0
+        back_left = carstate.angle < 0 and carstate.distance_from_center > 0
+
+        if front_right or front_left:
+            command.gear = 1
+        else:
+            command.gear = -1
+
+        if front_right or back_left or (dist < 0.1 and self.recovers > 25):
+            command.steering = 1
+        else:
+            command.steering = -1
+
+        command.accelerator = 0.4
+
+        self.recovers += 1
+        if (dist < 0.1 and self.recovers > 35) or self.recovers > 50:
+            self.recovers = 0
+        else:
+            self.recover_mode = True
+
+        return command
