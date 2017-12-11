@@ -230,7 +230,7 @@ class Evolution:
                 result += 50 * (start_rank - rank - num_cars_crashed)
 
                 # Damage
-                result -= dmg / 10
+                result -= dmg / 100
 
                 # Minimum of 0
                 if result < 0:
