@@ -91,6 +91,8 @@ class Evolution:
                 int(section['name']),
                 # Driver index
                 int(section.find('attnum', attrs={'name': 'index'})['val']),
+                # Damage
+                int(section.find('attnum', attrs={'name': 'dammages'})['val']),
                 # Driver name
                 section.find('attstr', attrs={'name': 'name'})['val'],
                 # Driver time
