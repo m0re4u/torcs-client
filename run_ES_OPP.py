@@ -309,7 +309,7 @@ class Evolution:
         signal.signal(signal.SIGALRM, self.timeout_handler)
 
         for i in range(0, self.iterations):
-            signal.alarm(1)
+            signal.alarm(240)
 
             try:
                 print("Iteration: {}".format(i))
