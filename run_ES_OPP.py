@@ -51,6 +51,7 @@ class Evolution:
 
         self.race = ""  # current race filename
         self.i = 0      # current race index
+        self.counter_start = exec_params["counter_start"]
 
         # Confiuration for the ES algorithm
         self.iterations = es_params['iterations']
@@ -344,10 +345,10 @@ class Evolution:
             # Update parameters using the noised parameters and the race
             # outcome
             self.update_parameters(reward_vector, noise_sets)
-            if (i + 1) % 25 == 0:
+            if (i + self.counter_start + 1) % 25 == 0:
                 torch.save(
                     self.model.state_dict(),
-                    "models/it{}.pt".format(i + 1)
+                    "models/it{}.pt".format(i + self.counter_start + 1)
                 )
             torch.save(
                 self.model.state_dict(),
@@ -379,6 +380,10 @@ if __name__ == '__main__':
     parser.add_argument(
         "-lr", "--learning_rate", help="Learning rate of the ES algorithm",
         default=1e-06, type=float
+    )
+    parser.add_argument(
+        "-cs", "--counter_start", help="Counter start for storing model files",
+        default=0, type=float
     )
     parser.add_argument(
         "-c", "--race_config", help="Race configuration files (xml) directory. \
@@ -431,7 +436,8 @@ if __name__ == '__main__':
         'server': args.server,
         'limit': args.limit,
         'test_races': args.test_races,
-        'continue_training': args.continue_training
+        'continue_training': args.continue_training,
+        'counter_start': args.counter_start
     }
 
     main(args.init_model, exec_params, ES_params)
