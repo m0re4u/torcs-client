@@ -25,6 +25,7 @@ class Evolution:
         self.modelspath = os.path.join(self.torcspath, "models")
 
         self.proc = subprocess
+        self.torcs_proc = subprocess
 
         # Init model
         if exec_params["continue_training"]:
@@ -255,8 +256,8 @@ class Evolution:
             procs.append(proc)
 
         # Start torcs and wait for it to finish
-        torcs_proc, race, start = self.run_torcs()
-        res = torcs_proc.communicate()
+        self.torcs_proc, race, start = self.run_torcs()
+        res = self.torcs_proc.communicate()
 
         end = time.time()
         print("Finished torcs at {:04.3f}, took {:04.3f} seconds".format(
@@ -327,9 +328,9 @@ class Evolution:
             except self.TimeoutException:
                 print("Timeout, go to next iteration")
                 try:
-                    os.killpg(self.proc.pid)
-                except:
-                    print("Could not kill torcs")
+                    os.killpg(self.torcs_proc.pid, signal.SIGTERM)
+                except Exception as e:
+                    print("Could not kill torcs with error:", e)
                 continue  # continue the for loop if function A takes more than 5 second
             else:
                 # Reset the alarm
