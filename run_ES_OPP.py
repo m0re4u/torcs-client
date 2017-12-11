@@ -383,7 +383,7 @@ if __name__ == '__main__':
     )
     parser.add_argument(
         "-cs", "--counter_start", help="Counter start for storing model files",
-        default=0, type=float
+        default=0, type=int
     )
     parser.add_argument(
         "-c", "--race_config", help="Race configuration files (xml) directory. \
