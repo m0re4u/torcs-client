@@ -257,7 +257,7 @@ class Evolution:
         # Change the behavior of SIGALRM
         signal.signal(signal.SIGALRM, self.timeout_handler)
 
-        signal.alarm(1)
+        signal.alarm(240)
         try:
             torcs_proc, race, start = self.run_torcs()
             res = torcs_proc.communicate()
