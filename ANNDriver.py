@@ -91,7 +91,7 @@ class ANNDriver(Driver):
 
             if not self.crash_recorded:
                 self.crash_recorded = True
-                self.swarm_info_partner["crashes"].append(
+                self.swarm_info["crashes"].append(
                     carstate.distance_raced)
         # NOT CRASHED
         else:
