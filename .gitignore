@@ -5,4 +5,4 @@ output/
 logs/
 .idea
 *.pyc
-
+mjv_partner*
