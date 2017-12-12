@@ -90,7 +90,7 @@ def main(train_file, cuda_enabled, params):
     elif params["depth"] == 3:
         model = ThreeLayerNet(D_in, H, D_out)
     else:
-        model = TwoLayerNet(D_in, H, D_out, params["server"])
+        model = TwoLayerNet(D_in, H, D_out)
 
     if cuda_enabled:
         model.cuda()
@@ -168,11 +168,6 @@ if __name__ == '__main__':
         '--cuda', action='store_true', default=False,
         help='enables CUDA training'
     )
-    parser.add_argument(
-        '--local', action='store_true', default=True,
-        help='Tells the FNN to turn of any hacks we did to get it to work on \
-        the Dropbox server'
-    )
     args = parser.parse_args()
     cuda_enabled = args.cuda and torch.cuda.is_available()
 
@@ -188,6 +183,5 @@ if __name__ == '__main__':
         "batch": args.batch,
         "depth": args.depth,
         "norm": args.norm,
-        "server": not args.local
     }
     main(args.train_file, cuda_enabled, param_dict)
