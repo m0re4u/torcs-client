@@ -144,10 +144,10 @@ class Evolution:
             race = race_list[self.i % len(race_list)]
             self.race = race
             if not self.server:
-                cmd = ["torcs", "-r", os.path.join(self.race_config, race)]
+                cmd = ["torcs", "-r", os.path.join(self.race_config, race), " -nodamage"]
             else:
                 cmd = ["/home/jadegeest/torcs/bin/torcs -r " +
-                       os.path.join(self.race_config, race)]
+                       os.path.join(self.race_config, race) + " -nodamage"]
         else:
             race = input("Select race-config (default:\"quickrace\"):")
             if not self.server:
@@ -231,7 +231,7 @@ class Evolution:
                 result += 50 * (start_rank - rank - num_cars_crashed)
 
                 # Damage
-                result -= dmg / 100
+                # result -= dmg / 100
 
                 # Minimum of 0
                 if result < 0:

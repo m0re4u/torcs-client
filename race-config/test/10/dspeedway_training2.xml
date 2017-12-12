@@ -13,8 +13,8 @@
   <section name="Tracks">
     <attnum name="maximum number" val="1"/>
     <section name="1">
-      <attstr name="name" val="e-track-1"/>
-      <attstr name="category" val="road"/>
+      <attstr name="name" val="d-speedway"/>
+      <attstr name="category" val="oval"/>
     </section>
 
   </section>
@@ -48,11 +48,46 @@
     <attnum name="maximum number" val="40"/>
     <attnum name="focused idx" val="0"/>
     <attstr name="focused module" val="scr_server"/>
-    <section name="1">
-      <attnum name="idx" val="0"/>
-      <attstr name="module" val="scr_server"/>
-    </section>
-
+      <section name="1">
+          <attnum name="idx" val="0"/>
+          <attstr name="module" val="berniw"/>
+      </section>
+      <section name="2">
+          <attnum name="idx" val="1"/>
+          <attstr name="module" val="olethros"/>
+      </section>
+      <section name="3">
+          <attnum name="idx" val="2"/>
+          <attstr name="module" val="lliaw"/>
+      </section>
+      <section name="4">
+          <attnum name="idx" val="3"/>
+          <attstr name="module" val="tita"/>
+      </section>
+      <section name="5">
+          <attnum name="idx" val="4"/>
+          <attstr name="module" val="inferno"/>
+      </section>
+      <section name="6">
+          <attnum name="idx" val="5"/>
+          <attstr name="module" val="damned"/>
+      </section>
+      <section name="7">
+          <attnum name="idx" val="6"/>
+          <attstr name="module" val="berniw2"/>
+      </section>
+      <section name="8">
+          <attnum name="idx" val="7"/>
+          <attstr name="module" val="human"/>
+      </section>
+      <section name="9">
+          <attnum name="idx" val="8"/>
+          <attstr name="module" val="scr_server"/>
+      </section>
+      <section name="10">
+          <attnum name="idx" val="9"/>
+          <attstr name="module" val="scr_server"/>
+      </section>
   </section>
 
   <section name="Configuration">
